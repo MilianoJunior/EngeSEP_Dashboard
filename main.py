@@ -7,6 +7,7 @@
 
     1 passo: Criar um projeto no github e vincular ao projeto local.
     2 passo: Vincular o repositório do github ao servidor da railway.
+    3 passo: Configurar o servidor da railway para rodar o projeto.
 '''
 
 import streamlit as st
@@ -17,30 +18,6 @@ def main():
     st.title('Engesep Dados')
     st.subheader('Dashboard para visualização de dados')
 
-    # file = st.file_uploader('Escolha a base de dados que deseja analisar', type='csv')
-    # if file is not None:
-    #     st.subheader('Analisando os dados')
-    #     df = pd.read_csv(file)
-    #     st.write(df)
-    #
-    #     st.subheader('Resumo dos dados')
-    #     select = st.selectbox('Escolha a coluna', df.columns)
-    #     st.write(df[select].describe())
-    #
-    #     st.subheader('Gráfico de barras')
-    #     st.bar_chart(df[select])
-    #
-    #     st.subheader('Gráfico de linha')
-    #     st.line_chart(df[select])
-    #
-    #     st.subheader('Gráfico de área')
-    #     st.area_chart(df[select])
-    #
-    #     st.subheader('Mapa de calor')
-    #     st.heatmap(df.corr(), annot=True)
 if __name__ == '__main__':
     main()
 
-
-# git config user.email "jrmfilho37@gmail.com"
-# git config user.name "MilianoJunior"
