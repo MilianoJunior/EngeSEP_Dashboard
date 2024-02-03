@@ -5,9 +5,9 @@
     projeto será um dashboard que vai mostrar os dados de um banco de dados que será alimentado por varias tabelas
     que já estão no servidor da railway.
 
-    1 passo: Criar um projeto no github e vincular ao projeto local.
-    2 passo: Vincular o repositório do github ao servidor da railway.
-    3 passo: Configurar o servidor da railway para rodar o projeto.
+    1 passo: Criar um projeto no github e vincular ao projeto local. ->OK
+    2 passo: Vincular o repositório do github ao servidor da railway. ->OK
+    3 passo: Configurar o servidor da railway para rodar o projeto. -> Faltante
 '''
 
 import streamlit as st
