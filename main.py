@@ -16,7 +16,7 @@ import numpy as np
 
 def main():
     st.title('Engesep Dados')
-    st.subheader('Dashboard para visualização de dados')
+    st.subheader('Ti amo Leticia e Leonardo')
 
 if __name__ == '__main__':
     main()
