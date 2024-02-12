@@ -22,7 +22,7 @@ def get_data():
     }
     # criar uma conexão com o banco de dados
     with Database() as db:
-        data = db.fetch_all(query['name_table'])
+        data = db.fetch_all(querys['name_table'])
 
     print(data.head())
     return data
