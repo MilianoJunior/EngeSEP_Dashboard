@@ -45,7 +45,7 @@ class Database:
                 database=self.database,
                 port=self.port,
                 use_pure=True,
-                connection_timeout=300
+                connection_timeout=30
             )
         except Exception as e:
             self._handle_error("Erro ao conectar ao banco de dados", e)
