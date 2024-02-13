@@ -52,9 +52,9 @@ def check_password():
         st.error("😕 Password incorrect")
     return False
 
-def get_data():
+def get_data(query):
     querys = {
-        'name_table': 'SELECT railway FROM information_schema.tables WHERE table_schema = "public"',
+        'name_table': 'SELECT table_name FROM information_schema.tables WHERE table_schema = "railway"',
     }
     try:
         # criar uma conexão com o banco de dados
@@ -75,7 +75,7 @@ def main():
     if st.button('Voltar'):
         st.session_state["password_correct"] = False
         st.stop()
-    name = get_data()
+    name = get_data('table_name')
     st.dataframe(name, use_container_width=True)
 
 if __name__ == '__main__':
