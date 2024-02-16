@@ -113,9 +113,6 @@ def check_password():
     # Show input for password.
     btn_password = st.text_input("Password", type="password", key="password")
 
-    print( 'Username: ', os.getenv('USERNAME'), btn_user, 'Password: ', os.getenv('PASSWORD'), btn_password)
-    print('-------------------')
-
     # Show a button to submit the password.
     btn = st.button("Enter", on_click=password_entered)
 
@@ -167,48 +164,7 @@ def get_usinas():
     tables = get_tables('usinas')
     tables_names = [str(name) for name in tables['table_name'].values]
     for table in tables.iterrows():
-        # dados = {}
-        # dados['name_usina'] = table['table_name']
         row(table)
-    # return None
-    # Itera sobre as tabelas em grupos de 3
-    # for i in range(0, len(tables_names), 3):
-    #     dados = {}
-    #     # Cria 3 colunas
-    #     cols = st.columns(3)
-    #
-    #     # Para cada coluna, adiciona a informação da tabela correspondente
-    #     for j in range(3):
-    #         # Verifica se ainda há tabelas para adicionar
-    #         if i + j < len(tables):
-    #             table_name = tables_names[i + j]
-    #             cols[j].subheader(tables['nome'].values[i + j])
-    #             # Aqui você pode adicionar mais informações sobre cada tabela
-    #             # Por exemplo, para adicionar dados da tabela, você pode fazer:
-    #             # data = get_datas(table_name)
-    #             cols[j].metric(label="Status", value='Ligado', delta="1")
-
-    # for table in tables.iterrows():
-    #     usina_name = str(table[1][0])
-    #     if 'cgh' in usina_name:
-    #         usina_data = {}
-    #
-    #         # print(usina_name)
-    #         st.subheader(usina_name)
-
-            # Fetch key metrics from the database
-            # data = get_datas(usina_name)
-
-            # Extract relevant metrics into a dictionary
-            # for col in data.columns:
-            #     if col in ['status','acumulador_energia', 'potencia_ativa', 'nivel_agua', 'frequencia']:
-            #         # usina_data[col] = data[col].iloc[0]
-            #         print(col)
-            #         print(data[col])
-            #         print('-------------------'*5)
-
-            # Create the card for this usina
-            # create_usina_card(usina_name, usina_data)
 
 def header():
     ''' Header do dashboard '''
