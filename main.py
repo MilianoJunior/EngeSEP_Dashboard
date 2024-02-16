@@ -56,21 +56,21 @@ def row(dados, vertical_align="top"):
 
 def minisparklines(name_table):
     ''' criar um dataframe com dados aleatórios '''
-    data = pd.DataFrame(np.random.randn(20, 3), columns=["date", "price:Q", "price"])
+    # select table
     df = get_datas(name_table)
     col = st.columns(10)
     # List of columns to plot
+    selected_column = st.selectbox('Escolha a coluna para análise', df.columns)
     cont = 0
     if df.empty:
         return None
-    for column in df.columns:
+    for selected_column in df.columns:
         if any([s in column for s in ['acumulador_energia', 'potencia_ativa', 'nivel_agua', 'frequencia','temp','Tf']]) and cont < 10:
             with col[cont]:
-                st.metric(column.replace('_', ' '), int(df[column].values[-1]))
-                print(cont, column)
+                st.metric(selected_column.replace('_', ' '), int(df[selected_column].values[-1]))
                 # Convert the column to float
-                df[column] = df[column].astype(float)
-                print(df.dtypes)
+                df[selected_column] = df[selected_column].astype(float)
+
                 # Create a sparkline chart
                 if 'temp' in column:
                     sparkbar_chart(
