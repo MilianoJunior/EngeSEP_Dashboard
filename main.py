@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 from streamlit_extras.row import row
-from streamlit_extras.altex import sparkline_chart, sparkbar_chart
+from streamlit_extras.altex import sparkline_chart, sparkbar_chart, sparkhist_chart
 from streamlit_extras.colored_header import colored_header
 
 load_dotenv()
@@ -65,18 +65,18 @@ def minisparklines(name_table):
     if df.empty:
         return None
     for selected_column in df.columns:
-        if any([s in column for s in ['acumulador_energia', 'potencia_ativa', 'nivel_agua', 'frequencia','temp','Tf']]) and cont < 10:
+        if any([s in selected_column for s in ['acumulador_energia', 'potencia_ativa', 'nivel_agua', 'frequencia','temp','Tf']]) and cont < 10:
             with col[cont]:
                 st.metric(selected_column.replace('_', ' '), int(df[selected_column].values[-1]))
                 # Convert the column to float
                 df[selected_column] = df[selected_column].astype(float)
 
                 # Create a sparkline chart
-                if 'temp' in column:
-                    sparkbar_chart(
+                if 'temp' in selected_column:
+                    sparkhist_chart(
                         data=df,
                         x="id",
-                        y=f"{column}:Q",
+                        y=f"{selected_column}:Q",
                         height=80,
                         autoscale_y=True,
                     )
@@ -84,51 +84,11 @@ def minisparklines(name_table):
                     sparkline_chart(
                         data=df,
                         x="id",
-                        y=f"{column}:Q",
+                        y=f"{selected_column}:Q",
                         height=80,
                         autoscale_y=True,
                     )
                 cont += 1
-
-
-        # print(df[column])
-        # print('-------------------'*5)
-    # with left:
-    #     st.metric("Energia", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
-    # with middle:
-    #     st.metric("Velocidade", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
-    # with right:
-    #     st.metric("Temp. Mancal Comb.", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
-    # with col:
-    #     st.metric("Vib. Mancal Guia", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
 
 def check_password():
     """Returns `True` if the user had the correct password."""
