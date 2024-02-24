@@ -30,7 +30,7 @@ def titulo(label, description, color_name="violet-70"):
     )
 def row(dados, vertical_align="top"):
     ''' Cria uma linha com os dados de uma usina '''
-    print(dados)
+
     # recebe os dados da usina
     name_usina = dados[1]['nome']
     name_table = dados[1]['table_name']
@@ -56,8 +56,16 @@ def row(dados, vertical_align="top"):
 
 def minisparklines(name_table):
     ''' criar um dataframe com dados aleatórios '''
-    # select table
-    df = get_datas(name_table)
+    # Consulta no banco de dados
+    # df = get_datas(name_table)
+    df = pd.DataFrame()
+    if df.empty:
+        df = pd.DataFrame(np.random.randn(200, 3), columns=["acumulador_energia", "potencia_ativa", "nivel_agua"])
+
+    # Cria a 1 coluna
+    row1 = row(2, vertical_align="center")
+    selected_column = row1.selectbox('Escolha a coluna para análise', df.columns)
+    row1.line_chart(df[selected_column], use_container_width=True)
     col = st.columns(10)
     # List of columns to plot
     selected_column = st.selectbox('Escolha a coluna para análise', df.columns)
