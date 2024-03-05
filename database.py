@@ -56,7 +56,7 @@ class Database:
 
     def execute_query(self, query, params=None):
         try:
-            self._debug(f"Executando query: {query}, params: {params}")
+            # self._debug(f"Executando query: {query}, params: {params}")
             self.ensure_connection()
             cursor = self.connection.cursor(buffered=True)
             cursor.execute(query, params or ())
@@ -76,7 +76,10 @@ class Database:
             result = cursor.fetchall()
             # Criar um DataFrame com os dados e as colunas
             df = pd.DataFrame(result, columns=columns)
-            self._debug(f"Resultado dados: {df}")
+
+            #converter a coluna data_hora para datetime
+            if 'data_hora' in df.columns:
+                df['data_hora'] = pd.to_datetime(df['data_hora'])
             return df
         except Exception as e:
             self._handle_error("Erro ao buscar todos os dados", e)
@@ -85,10 +88,33 @@ class Database:
         try:
             if self.connection and self.connection.is_connected():
                 self.connection.close()
-                print("Conexão com o banco de dados encerrada!")
         except Exception as e:
             self._handle_error("Erro ao fechar conexão", e)
 
+    def calculate_production(self, df, column, period):
+        """
+        Calcula a produção de energia corrigida para o período especificado de maneira ajustada.
+        """
+        try:
+            # converter a column para float
+            df[column] = df[column].astype(float)
+            # define o nome da coluna
+            columnp = column + '_p'
+            # Resample para o período desejado e calcula a diferença entre o primeiro e o último valor do período
+            df_resampled = df.resample(period).agg({column: ['first', 'last']})
+            # Calcula a diferença entre o último e o primeiro valor para obter a produção de energia no período
+            df_resampled[columnp] = df_resampled[(column, 'last')] - df_resampled[(column, 'first')]
+            # Limpa o DataFrame para remover níveis múltiplos nas colunas
+            df_resampled.columns = ['First Value', 'Last Value', columnp]
+            # Remove linhas onde a produção é NaN ou 0, pois isso indica que não houve produção no período
+            df_resampled = df_resampled[df_resampled[columnp].notna() & (df_resampled[columnp] != 0)]
+            # exclui as colunas First Value e Last Value
+            df_resampled = df_resampled.drop(columns=['First Value', 'Last Value'])
+
+            return df_resampled
+        except Exception as e:
+            self._handle_error("Erro ao calcular a produção de energia", e)
+            return pd.DataFrame()
 
     def reverse_rename(self, abbr):
         try:

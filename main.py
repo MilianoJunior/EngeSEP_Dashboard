@@ -19,7 +19,10 @@ import pandas as pd
 from streamlit_extras.row import row
 from streamlit_extras.altex import sparkline_chart, sparkbar_chart
 from streamlit_extras.colored_header import colored_header
+from streamlit_extras.metric_cards import style_metric_cards
+from api import gemini
 
+cont = 0
 load_dotenv()
 
 def titulo(label, description, color_name="violet-70"):
@@ -30,105 +33,116 @@ def titulo(label, description, color_name="violet-70"):
     )
 def row(dados, vertical_align="top"):
     ''' Cria uma linha com os dados de uma usina '''
-    print(dados)
     # recebe os dados da usina
     name_usina = dados[1]['nome']
     name_table = dados[1]['table_name']
 
     # Cria o título da usina
-    titulo(name_usina, 'Status: Ligado', 'violet-70')
+    titulo(name_usina, '', 'violet-70')
 
     # Cria uma linha com os dados da usina
     minisparklines(name_table)
 
-
-    # random_df = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
-    #
-    # row1 = row(2, vertical_align="center")
-    # row1.dataframe(random_df, use_container_width=True)
-    # row1.line_chart(random_df, use_container_width=True)
-    #
-    # row2 = row([2, 4, 1], vertical_align="bottom")
-    #
-    # row2.selectbox("Select Country", ["Germany", "Italy", "Japan", "USA"])
-    # row2.text_input("Your name")
-    # row2.button("Send", use_container_width=True)
+def tabs(tables):
+    ''' Cria as abas do dashboard '''
+    names = list(tables['nome'].values)
+    tab = st.tabs(names)
+    index = 0
+    for ta in tab:
+        with ta:
+            minisparklines(tables['table_name'].values[index])
+        index += 1
+        break
 
 def minisparklines(name_table):
     ''' criar um dataframe com dados aleatórios '''
-    data = pd.DataFrame(np.random.randn(20, 3), columns=["date", "price:Q", "price"])
+    global cont
+
+    cont += 1
+    print('Interação: ', cont, name_table)
     df = get_datas(name_table)
-    col = st.columns(10)
-    # List of columns to plot
-    cont = 0
+    # print(df.columns)
     if df.empty:
-        return None
-    for column in df.columns:
-        if any([s in column for s in ['acumulador_energia', 'potencia_ativa', 'nivel_agua', 'frequencia','temp','Tf']]) and cont < 10:
-            with col[cont]:
-                st.metric(column.replace('_', ' '), int(df[column].values[-1]))
-                print(cont, column)
-                # Convert the column to float
-                df[column] = df[column].astype(float)
-                print(df.dtypes)
-                # Create a sparkline chart
-                if 'temp' in column:
-                    sparkbar_chart(
-                        data=df,
-                        x="id",
-                        y=f"{column}:Q",
-                        height=80,
-                        autoscale_y=True,
-                    )
-                else:
-                    sparkline_chart(
-                        data=df,
-                        x="id",
-                        y=f"{column}:Q",
-                        height=80,
-                        autoscale_y=True,
-                    )
-                cont += 1
+        st.write('Sem dados')
+    else:
+        df['data_hora'] = pd.to_datetime(df['data_hora'])
+        df.set_index('data_hora', inplace=True)
+        columns_init = [col for col in df.columns if 'energia' in col]
+        columns_metric = [col for col in df.columns if 'velocidade' in col or 'temp' in col or 'distribuidor' in col or 'pressao' in col or 'nivel' in col]
+        dfs = {}
+        for col in columns_init:
+            dfs[col] = get_period(df, col, 'D')  # Supondo que isto retorna um DataFrame agregado por dia
 
+        resp = None
+        prompt = 'Considerando os dados da usina, existe alguma previsão ou alerta que gostaria de fazer?'
+        def get_unit(col):
+            ''' Retorna a unidade de medida de uma coluna '''
+            unidade = {
+                'temp': '°C',
+                'velocidade': 'RPM',
+                'distribuidor': '%',
+                'pressao': 'bar',
+                'nivel': 'm'
+            }
+            for key in unidade.keys():
+                if key in col:
+                    return unidade[key]
+            return ''
 
-        # print(df[column])
-        # print('-------------------'*5)
-    # with left:
-    #     st.metric("Energia", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
-    # with middle:
-    #     st.metric("Velocidade", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
-    # with right:
-    #     st.metric("Temp. Mancal Comb.", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
-    # with col:
-    #     st.metric("Vib. Mancal Guia", int(data["price"].mean()))
-    #     sparkline_chart(
-    #         data=data,
-    #         x="date",
-    #         y="price:Q",
-    #         height=80,
-    #         autoscale_y=True,
-    #     )
+        def get_previous_non_zero(values):
+            for value in reversed(values):
+                if value != 0:
+                    return value
+            return 1
+
+        col = st.columns([.4,.3,.3])
+        altura = 650
+
+        # primeira coluna
+        with col[0]:
+            with st.container(height=altura):
+                for turbine, df_turbine in dfs.items():
+                    if not df_turbine.empty:
+                        st.write(turbine.replace('_', ' ').capitalize())
+                        st.bar_chart(df_turbine, use_container_width=True)
+
+                        # Cria uma caixa de seleção para as colunas do dataframe
+                        column = st.selectbox('Selecione a variável', options=df.columns.tolist())
+
+                        # Cria uma caixa de seleção para os períodos disponíveis
+                        period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'])
+
+                        # Cria um botão para chamar a função get_period
+                        if st.button('Setar informações'):
+                            # Chama a função get_period com a coluna e o período selecionados
+                            result = db.calculate_production(df, column, period)
+                            st.write(result)
+        with col[1]:
+            with st.container(height=altura):
+                count = 0
+                for coll in columns_metric:
+                    if count % 3 == 0:
+                        col1, col2, col3 = st.columns(3)
+                    name = coll.replace('_', ' ').replace('ug', 'UG-')
+                    unit = get_unit(coll)
+                    valor = f'{str(df[coll].values[-1])} {unit}'
+                    percent = f'{round((df[coll].values[-1] - get_previous_non_zero(df[coll].values[:-1])) / get_previous_non_zero(df[coll].values[:-1]) * 100, 2)} {unit}'
+                    prompt += f'{name}: {valor} ({percent}) \n'
+                    if count % 3 == 0:
+                        col1.metric(name, valor, percent)
+                    elif count % 3 == 1:
+                        col2.metric(name, valor, percent)
+                    else:
+                        col3.metric(name, valor, percent)
+                    count += 1
+        # segunda coluna
+        # print(info, type(info))
+        with col[2]:
+            with st.container(height=altura):
+                st.write('Análise dos dados por IA')
+                if resp == None:
+                    resp = gemini(prompt)
+                st.write(resp)
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -152,9 +166,6 @@ def check_password():
     btn_user = st.text_input("Username", key="username")
     # Show input for password.
     btn_password = st.text_input("Password", type="password", key="password")
-
-    print( 'Username: ', os.getenv('USERNAME'), btn_user, 'Password: ', os.getenv('PASSWORD'), btn_password)
-    print('-------------------')
 
     # Show a button to submit the password.
     btn = st.button("Enter", on_click=password_entered)
@@ -182,7 +193,6 @@ def get_columns(query):
         query = 'ALTER TABLE Usinas ADD table_name VARCHAR(255) NOT NULL;'
 
         with Database() as db:
-            # data = db.fetch_all(f'SHOW COLUMNS FROM {query};')
             data = db.fetch_all(query)
             return data
     except Exception as e:
@@ -191,76 +201,45 @@ def get_columns(query):
 
 def get_datas(query):
     try:
-
         # query que retorna os ultimos 10 registros da tabela
-        query = f'SELECT * FROM {query} ORDER BY id DESC LIMIT 100'
+        query = f'SELECT * FROM {query} ORDER BY id DESC LIMIT 20000'
         # criar uma conexão com o banco de dados
         with Database() as db:
             return db.fetch_all(query)
     except Exception as e:
-        print(e)
+        return pd.DataFrame()
+
+def get_period(df, column, period):
+    ''' Retorna os valores de um período '''
+    try:
+        # criar uma conexão com o banco de dados
+        with Database() as db:
+            return db.calculate_production(df, column, period)
+    except Exception as e:
         return pd.DataFrame()
 
 
 def get_usinas():
     """Retrieves key metrics from each usina table."""
     tables = get_tables('usinas')
-    tables_names = [str(name) for name in tables['table_name'].values]
-    for table in tables.iterrows():
-        # dados = {}
-        # dados['name_usina'] = table['table_name']
-        row(table)
-    # return None
-    # Itera sobre as tabelas em grupos de 3
-    # for i in range(0, len(tables_names), 3):
-    #     dados = {}
-    #     # Cria 3 colunas
-    #     cols = st.columns(3)
-    #
-    #     # Para cada coluna, adiciona a informação da tabela correspondente
-    #     for j in range(3):
-    #         # Verifica se ainda há tabelas para adicionar
-    #         if i + j < len(tables):
-    #             table_name = tables_names[i + j]
-    #             cols[j].subheader(tables['nome'].values[i + j])
-    #             # Aqui você pode adicionar mais informações sobre cada tabela
-    #             # Por exemplo, para adicionar dados da tabela, você pode fazer:
-    #             # data = get_datas(table_name)
-    #             cols[j].metric(label="Status", value='Ligado', delta="1")
-
+    # tables_names = [str(name) for name in tables['table_name'].values]
+    # row(tables)
+    # print(tables['nome'].values)
+    tabs(tables)
     # for table in tables.iterrows():
-    #     usina_name = str(table[1][0])
-    #     if 'cgh' in usina_name:
-    #         usina_data = {}
-    #
-    #         # print(usina_name)
-    #         st.subheader(usina_name)
+    #     row(table)
 
-            # Fetch key metrics from the database
-            # data = get_datas(usina_name)
-
-            # Extract relevant metrics into a dictionary
-            # for col in data.columns:
-            #     if col in ['status','acumulador_energia', 'potencia_ativa', 'nivel_agua', 'frequencia']:
-            #         # usina_data[col] = data[col].iloc[0]
-            #         print(col)
-            #         print(data[col])
-            #         print('-------------------'*5)
-
-            # Create the card for this usina
-            # create_usina_card(usina_name, usina_data)
 
 def header():
     ''' Header do dashboard '''
     st.subheader('EngeSEP - Dashboard')
-    if st.button('Voltar'):
-        st.session_state["password_correct"] = False
-        st.stop()
-# streamlit run main.py
+
 
 def main():
     ''' Dashboard principal '''
+    # configuração da página
     st.set_page_config(layout="wide")
+
     # Header
     header()
 
@@ -270,6 +249,8 @@ def main():
 
 
 if __name__ == '__main__':
+
+
     main()
     # if not check_password():
     #     cont += 1
@@ -280,4 +261,5 @@ if __name__ == '__main__':
     #     cont += 1
     #     print('Senha correta', cont)
     #     main()
+
 
