@@ -124,19 +124,19 @@ def minisparklines(name_table):
                         st.write(name_plot)
                         st.bar_chart(turbine, use_container_width=True)
 
-                        column = st.selectbox('Selecione a variável', options=df.columns.tolist(),
-                                              key=f"{name_table}_var_{i}")
-                        period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'],
-                                              key=f"{name_table}_period_{i}")
+                        # column = st.selectbox('Selecione a variável', options=df.columns.tolist(),
+                        #                       key=f"{name_table}_var_{i}")
+                        # period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'],
+                        #                       key=f"{name_table}_period_{i}")
 
-                        # Cria um botão para chamar a função get_period
-                        if st.button('Setar informações',key=f"{name_table}_btn_{i}"):
-                            # Chama a função get_period com a coluna e o período selecionados
-                            if 'acumulador_energia' in column:
-                                result = db.calculate_production(df, column, period)
-                                st.write(result)
-                            # Força a atualização da página
-                            st.rerun()
+                        # # Cria um botão para chamar a função get_period
+                        # if st.button('Setar informações',key=f"{name_table}_btn_{i}"):
+                        #     # Chama a função get_period com a coluna e o período selecionados
+                        #     if 'acumulador_energia' in column:
+                        #         result = db.calculate_production(df, column, period)
+                        #         st.write(result)
+                        #     # Força a atualização da página
+                        #     st.rerun()
         with col[1]:
             with st.container(height=altura):
                 count = 0
