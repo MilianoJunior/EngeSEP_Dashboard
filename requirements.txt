@@ -4,4 +4,5 @@ pandas==2.2.0
 setuptools==69.0.3
 streamlit==1.31.0
 python-dotenv==1.0.1
+streamlit-extras==0.4.0
 
