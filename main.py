@@ -57,6 +57,7 @@ def minisparklines(name_table):
         df.set_index('data_hora', inplace=True)
         columns_init = [col for col in df.columns if 'energia' in col]
         columns_metric = [col for col in df.columns if 'velocidade' in col or 'temp' in col or 'distribuidor' in col or 'pressao' in col or 'nivel' in col]
+        df = df.drop(columns=['id'])
         dfs = {}
         for col in columns_init:
             dfs[col] = get_period(df, col, 'D')  # Supondo que isto retorna um DataFrame agregado por dia
@@ -86,25 +87,56 @@ def minisparklines(name_table):
         col = st.columns([.4,.3,.3])
         altura = 650
 
+        def get_data_for_plot(df, column, period):
+            # Aqui você pode adicionar o código para criar um novo DataFrame com base na coluna e no período selecionados
+            # Por exemplo, se o período for 'dia', você pode agrupar os dados por dia e calcular a média da coluna selecionada
+            if period == 'dia':
+                df_plot = df[column].resample('D').mean()
+            elif period == 'semana':
+                df_plot = df[column].resample('W').mean()
+            elif period == 'mês':
+                df_plot = df[column].resample('M').mean()
+            else:  # para '1 hora'
+                df_plot = df[column].resample('H').mean()
+            return df_plot
+
+
+
         # primeira coluna
         with col[0]:
             with st.container(height=altura):
-                for turbine, df_turbine in dfs.items():
-                    if not df_turbine.empty:
-                        st.write(turbine.replace('_', ' ').replace('ug', 'UG-'))
-                        st.bar_chart(df_turbine, use_container_width=True)
+                # dentro do loop
+                # for i, (key, turbine) in enumerate(dfs.items()):
+                #     if not turbine.empty:
+                #         name_plot = key.replace('_', ' ').replace('UG-', 'UG-')
+                #         column = st.selectbox('Selecione a variável', options=df.columns.tolist(),
+                #                               key=f"{name_table}_var_{i}")
+                #         period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'],
+                #                               key=f"{name_table}_period_{i}")
+                #
+                #         if 'energia' in column:
+                #             if st.button('Setar informações', key=f"{name_table}_btn_{i}"):
+                #                 df_plot = get_data_for_plot(df, column, period)
+                #                 st.bar_chart(df_plot, use_container_width=True, title=name_plot)
+                for i, (key, turbine) in enumerate(dfs.items()):
+                    if not turbine.empty:
+                        name_plot = key.replace('_', ' ').replace('ug', 'UG-')
+                        st.write(name_plot)
+                        st.bar_chart(turbine, use_container_width=True)
 
-                        # Cria uma caixa de seleção para as colunas do dataframe
-                        column = st.selectbox('Selecione a variável', options=df.columns.tolist())
-
-                        # Cria uma caixa de seleção para os períodos disponíveis
-                        period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'])
+                        column = st.selectbox('Selecione a variável', options=df.columns.tolist(),
+                                              key=f"{name_table}_var_{i}")
+                        period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'],
+                                              key=f"{name_table}_period_{i}")
 
                         # Cria um botão para chamar a função get_period
-                        if st.button('Setar informações'):
+                        if st.button('Setar informações',key=f"{name_table}_btn_{i}"):
                             # Chama a função get_period com a coluna e o período selecionados
-                            result = db.calculate_production(df, column, period)
-                            st.write(result)
+                            if 'acumulador_energia' in column:
+                                result = db.calculate_production(df, column, period)
+                                st.write(result)
+                            # Força a atualização da página
+                            st.rerun()
         with col[1]:
             with st.container(height=altura):
                 count = 0
@@ -130,6 +162,9 @@ def minisparklines(name_table):
                 if resp == None:
                     resp = gemini(prompt)
                 st.write(resp)
+
+        print('----------------------' * 10)
+        print(prompt)
 
 def check_password():
     """Returns `True` if the user had the correct password."""
