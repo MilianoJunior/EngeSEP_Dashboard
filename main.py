@@ -31,17 +31,6 @@ def titulo(label, description, color_name="violet-70"):
         description=description,
         color_name=color_name,
     )
-def row(dados, vertical_align="top"):
-    ''' Cria uma linha com os dados de uma usina '''
-    # recebe os dados da usina
-    name_usina = dados[1]['nome']
-    name_table = dados[1]['table_name']
-
-    # Cria o título da usina
-    titulo(name_usina, '', 'violet-70')
-
-    # Cria uma linha com os dados da usina
-    minisparklines(name_table)
 
 def tabs(tables):
     ''' Cria as abas do dashboard '''
@@ -52,7 +41,6 @@ def tabs(tables):
         with ta:
             minisparklines(tables['table_name'].values[index])
         index += 1
-        break
 
 def minisparklines(name_table):
     ''' criar um dataframe com dados aleatórios '''
@@ -103,7 +91,7 @@ def minisparklines(name_table):
             with st.container(height=altura):
                 for turbine, df_turbine in dfs.items():
                     if not df_turbine.empty:
-                        st.write(turbine.replace('_', ' ').capitalize())
+                        st.write(turbine.replace('_', ' ').replace('ug', 'UG-'))
                         st.bar_chart(df_turbine, use_container_width=True)
 
                         # Cria uma caixa de seleção para as colunas do dataframe
@@ -126,7 +114,7 @@ def minisparklines(name_table):
                     name = coll.replace('_', ' ').replace('ug', 'UG-')
                     unit = get_unit(coll)
                     valor = f'{str(df[coll].values[-1])} {unit}'
-                    percent = f'{round((df[coll].values[-1] - get_previous_non_zero(df[coll].values[:-1])) / get_previous_non_zero(df[coll].values[:-1]) * 100, 2)} {unit}'
+                    percent = f'{round((df[coll].values[-1] - get_previous_non_zero(df[coll].values[:-1])) / get_previous_non_zero(df[coll].values[:-1]) * 100, 2)} %'
                     prompt += f'{name}: {valor} ({percent}) \n'
                     if count % 3 == 0:
                         col1.metric(name, valor, percent)
@@ -136,7 +124,6 @@ def minisparklines(name_table):
                         col3.metric(name, valor, percent)
                     count += 1
         # segunda coluna
-        # print(info, type(info))
         with col[2]:
             with st.container(height=altura):
                 st.write('Análise dos dados por IA')
@@ -222,12 +209,8 @@ def get_period(df, column, period):
 def get_usinas():
     """Retrieves key metrics from each usina table."""
     tables = get_tables('usinas')
-    # tables_names = [str(name) for name in tables['table_name'].values]
-    # row(tables)
-    # print(tables['nome'].values)
+
     tabs(tables)
-    # for table in tables.iterrows():
-    #     row(table)
 
 
 def header():
