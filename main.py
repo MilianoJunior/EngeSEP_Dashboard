@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 from datetime import datetime
+import streamlit as st
+import plotly.graph_objects as go
 from streamlit_extras.row import row
 from streamlit_extras.altex import sparkline_chart, sparkbar_chart
 from streamlit_extras.colored_header import colored_header
@@ -44,6 +46,29 @@ def tabs(tables):
             minisparklines(tables['table_name'].values[index])
         index += 1
         break
+
+def gauge_chart(velocidade_atual, velocidade_referencia, velocidade_maxima, velocidade_segura, velocidade_atencao, margem_erro):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number+delta",
+        value=velocidade_atual,
+        title={'text': "Velocidade da Turbina"},
+        delta={'reference': velocidade_referencia},
+        gauge={'axis': {'range': [None, velocidade_maxima]},
+               'steps': [
+                   {'range': [0, velocidade_segura], 'color': "lightgreen"},
+                   {'range': [velocidade_segura, velocidade_atencao], 'color': "yellow"},
+                   {'range': [velocidade_atencao, velocidade_maxima], 'color': "red"}],
+               'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75,
+                             'value': velocidade_atual + margem_erro}}
+    ))
+
+    fig.update_layout(autosize=True,
+                      width=200,
+                      height=250,
+                      paper_bgcolor='rgba(0,0,0,0)',
+                      plot_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def minisparklines(name_table):
     ''' criar um dataframe com dados aleatórios '''
@@ -167,15 +192,28 @@ def minisparklines(name_table):
         # segunda coluna
         with col[2]:
             with st.container(height=altura):
-                data_hora_atual = df.index[-1]
                 titulo('HAWKING IA ', f'Última atualização {data_hora_atual}')
 
                 if resp == None:
                     resp = gemini(prompt)
                 st.write(resp)
 
-        # print('----------------------' * 10)
-        # print(prompt)
+        col = st.columns([.2, .2, .2, .2, .2])
+        count = 0
+        # with st.container(height=150):
+        for coluna in df.columns:
+            if 'velocidade' in coluna:
+                with col[count]:
+                    velocidade_atual = df[coluna].values[-1]
+                    velocidade_referencia = df[coluna].values.mean()
+                    velocidade_maxima = df[coluna].values.max()
+                    velocidade_segura = df[coluna].values.mean() * 0.8
+                    velocidade_atencao = df[coluna].values.mean() * 0.9
+                    margem_erro = 5
+                    gauge_chart(velocidade_atual, velocidade_referencia, velocidade_maxima, velocidade_segura, velocidade_atencao, margem_erro)
+                count += 1
+                    # gauge_chart(df[coluna].values[-1], 100, 100, 80, 90, 5)
+            # gauge_chart(df['ve'].values[-1], 100, 100, 80, 90, 5)
 
 def check_password():
     """Returns `True` if the user had the correct password."""
