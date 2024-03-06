@@ -45,7 +45,6 @@ def tabs(tables):
         with ta:
             minisparklines(tables['table_name'].values[index])
         index += 1
-        break
 
 def gauge_chart(velocidade_atual, velocidade_referencia, velocidade_maxima, velocidade_segura, velocidade_atencao, margem_erro):
     fig = go.Figure(go.Indicator(
