@@ -16,16 +16,18 @@ from database import Database
 from dotenv import load_dotenv
 import os
 import pandas as pd
+from datetime import datetime
 from streamlit_extras.row import row
 from streamlit_extras.altex import sparkline_chart, sparkbar_chart
 from streamlit_extras.colored_header import colored_header
 from streamlit_extras.metric_cards import style_metric_cards
+from st_on_hover_tabs import on_hover_tabs
 from api import gemini
 
 cont = 0
 load_dotenv()
 
-def titulo(label, description, color_name="violet-70"):
+def titulo(label, description, color_name="gray-70"):
     colored_header(
         label=label,
         description=description,
@@ -66,6 +68,8 @@ def minisparklines(name_table):
 
         resp = None
         prompt = 'Considerando os dados da usina, existe alguma previsão ou alerta que gostaria de fazer?'
+        data_hora_db = df.index[-1].strftime('%d/%m/%Y %H:%M')  # Formato: 01/01/2022 00:00
+        data_hora_atual = datetime.now().strftime('%d/%m/%Y %H:%M')  # Formato: 01/01/2022 00:00
         def get_unit(col):
             ''' Retorna a unidade de medida de uma coluna '''
             unidade = {
@@ -107,6 +111,7 @@ def minisparklines(name_table):
         # primeira coluna
         with col[0]:
             with st.container(height=altura):
+                titulo('Histórico', f'Última atualização {data_hora_db}')
                 # dentro do loop
                 # for i, (key, turbine) in enumerate(dfs.items()):
                 #     if not turbine.empty:
@@ -141,6 +146,7 @@ def minisparklines(name_table):
                         #     st.rerun()
         with col[1]:
             with st.container(height=altura):
+                titulo('Métricas', f'Última atualização {data_hora_db}')
                 count = 0
                 for coll in columns_metric:
                     if count % 3 == 0:
@@ -161,7 +167,9 @@ def minisparklines(name_table):
         # segunda coluna
         with col[2]:
             with st.container(height=altura):
-                st.write('Análise dos dados por IA')
+                data_hora_atual = df.index[-1]
+                titulo('HAWKING IA ', f'Última atualização {data_hora_atual}')
+
                 if resp == None:
                     resp = gemini(prompt)
                 st.write(resp)
@@ -253,20 +261,18 @@ def get_usinas():
 
 def header():
     ''' Header do dashboard '''
-    # Crie o menu lateral
-    st.sidebar.title("EngeSEP - Dashboard")
-    # Adicione opções ao menu
-    opcoes = st.sidebar.radio("Menu", ('Página Inicial', 'Análise de Dados', 'Configurações', 'Sobre'))
+    st.markdown('<style>' + open('./style.css').read() + '</style>', unsafe_allow_html=True)
+    with st.sidebar:
+        tabs = on_hover_tabs(tabName=['Dashboard', 'Configurações'],
+                             iconName=['dashboard', 'settings'], default_choice=0)
 
-    # Dependendo da opção clicada, mostre diferentes informações na página principal
-    if opcoes == 'Página Inicial':
+    if tabs == 'Dashboard':
+        st.title("Dashboard")
         get_usinas()
-    elif opcoes == 'Análise de Dados':
-        st.header('Análise de Dados')
-    elif opcoes == 'Configurações':
-        st.header('Configurações')
-    elif opcoes == 'Sobre':
-        st.header('Sobre')
+
+    elif tabs == 'Configurações':
+        st.title("Configurações")
+        st.write('Name of option is {}'.format(tabs))
 
 
 def main():
