@@ -198,20 +198,20 @@ def minisparklines(name_table):
                     resp = gemini(prompt)
                 st.write(resp)
 
-        col = st.columns([.2, .2, .2, .2, .2])
-        count = 0
-        # with st.container(height=150):
-        for coluna in df.columns:
-            if 'velocidade' in coluna:
-                with col[count]:
-                    velocidade_atual = df[coluna].values[-1]
-                    velocidade_referencia = df[coluna].values.mean()
-                    velocidade_maxima = df[coluna].values.max()
-                    velocidade_segura = df[coluna].values.mean() * 0.8
-                    velocidade_atencao = df[coluna].values.mean() * 0.9
-                    margem_erro = 5
-                    gauge_chart(velocidade_atual, velocidade_referencia, velocidade_maxima, velocidade_segura, velocidade_atencao, margem_erro)
-                count += 1
+        # col = st.columns([.2, .2, .2, .2, .2])
+        # count = 0
+        # # with st.container(height=150):
+        # for coluna in df.columns:
+        #     if 'velocidade' in coluna:
+        #         with col[count]:
+        #             velocidade_atual = df[coluna].values[-1]
+        #             velocidade_referencia = df[coluna].values.mean()
+        #             velocidade_maxima = df[coluna].values.max()
+        #             velocidade_segura = df[coluna].values.mean() * 0.8
+        #             velocidade_atencao = df[coluna].values.mean() * 0.9
+        #             margem_erro = 5
+        #             gauge_chart(velocidade_atual, velocidade_referencia, velocidade_maxima, velocidade_segura, velocidade_atencao, margem_erro)
+        #         count += 1
                     # gauge_chart(df[coluna].values[-1], 100, 100, 80, 90, 5)
             # gauge_chart(df['ve'].values[-1], 100, 100, 80, 90, 5)
 
