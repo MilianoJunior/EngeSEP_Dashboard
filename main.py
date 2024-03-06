@@ -41,6 +41,7 @@ def tabs(tables):
         with ta:
             minisparklines(tables['table_name'].values[index])
         index += 1
+        break
 
 def minisparklines(name_table):
     ''' criar um dataframe com dados aleatórios '''
@@ -50,6 +51,7 @@ def minisparklines(name_table):
     print('Interação: ', cont, name_table)
     df = get_datas(name_table)
     # print(df.columns)
+
     if df.empty:
         st.write('Sem dados')
     else:
@@ -155,6 +157,7 @@ def minisparklines(name_table):
                     else:
                         col3.metric(name, valor, percent)
                     count += 1
+                    style_metric_cards()
         # segunda coluna
         with col[2]:
             with st.container(height=altura):
@@ -163,8 +166,8 @@ def minisparklines(name_table):
                     resp = gemini(prompt)
                 st.write(resp)
 
-        print('----------------------' * 10)
-        print(prompt)
+        # print('----------------------' * 10)
+        # print(prompt)
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -250,7 +253,20 @@ def get_usinas():
 
 def header():
     ''' Header do dashboard '''
-    st.subheader('EngeSEP - Dashboard')
+    # Crie o menu lateral
+    st.sidebar.title("EngeSEP - Dashboard")
+    # Adicione opções ao menu
+    opcoes = st.sidebar.radio("Menu", ('Página Inicial', 'Análise de Dados', 'Configurações', 'Sobre'))
+
+    # Dependendo da opção clicada, mostre diferentes informações na página principal
+    if opcoes == 'Página Inicial':
+        get_usinas()
+    elif opcoes == 'Análise de Dados':
+        st.header('Análise de Dados')
+    elif opcoes == 'Configurações':
+        st.header('Configurações')
+    elif opcoes == 'Sobre':
+        st.header('Sobre')
 
 
 def main():
@@ -262,7 +278,7 @@ def main():
     header()
 
     # Usinas
-    get_usinas()
+    # get_usinas()
 
 
 
