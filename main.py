@@ -9,6 +9,8 @@
     2 passo: Vincular o repositório do github ao servidor da railway. ->OK
     3 passo: Configurar o servidor da railway para rodar o projeto. -> Faltante
 '''
+import time
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -25,6 +27,8 @@ from streamlit_extras.colored_header import colored_header
 from streamlit_extras.metric_cards import style_metric_cards
 from st_on_hover_tabs import on_hover_tabs
 from api import gemini
+import random
+import re
 
 cont = 0
 load_dotenv()
@@ -39,6 +43,12 @@ def titulo(label, description, color_name="gray-70"):
 def tabs(tables):
     ''' Cria as abas do dashboard '''
     names = list(tables['nome'].values)
+    # Embaralha a lista in-place
+    # index_random = [random.randint(0, len(names) - 1)  for name in names]
+    # names = [names[index] for index in index_random]
+    # tables_names = [tables['table_name'].values[index] for index in index_random]
+    print('--------------------------------------------------------------')
+    print(names)
     tab = st.tabs(names)
     index = 0
     for ta in tab:
@@ -74,15 +84,16 @@ def minisparklines(name_table):
     global cont
 
     cont += 1
-    print('Interação: ', cont, name_table)
+    # print('Interação: ', cont, name_table)
     df = get_datas(name_table)
-    # print(df.columns)
 
     if df.empty:
         st.write('Sem dados')
     else:
         df['data_hora'] = pd.to_datetime(df['data_hora'])
         df.set_index('data_hora', inplace=True)
+        last_index = df.index[0]
+        last_index_str = last_index.strftime('%d/%m/%Y %H:%M')
         columns_init = [col for col in df.columns if 'energia' in col]
         columns_metric = [col for col in df.columns if 'velocidade' in col or 'temp' in col or 'distribuidor' in col or 'pressao' in col or 'nivel' in col]
         df = df.drop(columns=['id'])
@@ -91,9 +102,11 @@ def minisparklines(name_table):
             dfs[col] = get_period(df, col, 'D')  # Supondo que isto retorna um DataFrame agregado por dia
 
         resp = None
-        prompt = 'Considerando os dados da usina, existe alguma previsão ou alerta que gostaria de fazer?'
-        data_hora_db = df.index[-1].strftime('%d/%m/%Y %H:%M')  # Formato: 01/01/2022 00:00
+        prompt = f'Para os dados da usina existe alguma previsão ou alerta que gostaria de fazer? Acrescente os alertas e previsões dentro das tags nos <alerta> alerta </alerta> ou <previsao> previsao </previsao>, para eu usar regex com python e colocar nos componentes st.warning(text) e st.info(text) \n'
+
+        data_hora_db = last_index_str
         data_hora_atual = datetime.now().strftime('%d/%m/%Y %H:%M')  # Formato: 01/01/2022 00:00
+
         def get_unit(col):
             ''' Retorna a unidade de medida de uma coluna '''
             unidade = {
@@ -115,59 +128,29 @@ def minisparklines(name_table):
             return 1
 
         col = st.columns([.4,.3,.3])
-        altura = 650
+        altura = 750
 
         def get_data_for_plot(df, column, period):
-            # Aqui você pode adicionar o código para criar um novo DataFrame com base na coluna e no período selecionados
-            # Por exemplo, se o período for 'dia', você pode agrupar os dados por dia e calcular a média da coluna selecionada
             if period == 'dia':
                 df_plot = df[column].resample('D').mean()
             elif period == 'semana':
                 df_plot = df[column].resample('W').mean()
             elif period == 'mês':
                 df_plot = df[column].resample('M').mean()
-            else:  # para '1 hora'
+            else:
                 df_plot = df[column].resample('H').mean()
             return df_plot
-
-
 
         # primeira coluna
         with col[0]:
             with st.container(height=altura):
                 titulo('Histórico', f'Última atualização {data_hora_db}')
-                # dentro do loop
-                # for i, (key, turbine) in enumerate(dfs.items()):
-                #     if not turbine.empty:
-                #         name_plot = key.replace('_', ' ').replace('UG-', 'UG-')
-                #         column = st.selectbox('Selecione a variável', options=df.columns.tolist(),
-                #                               key=f"{name_table}_var_{i}")
-                #         period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'],
-                #                               key=f"{name_table}_period_{i}")
-                #
-                #         if 'energia' in column:
-                #             if st.button('Setar informações', key=f"{name_table}_btn_{i}"):
-                #                 df_plot = get_data_for_plot(df, column, period)
-                #                 st.bar_chart(df_plot, use_container_width=True, title=name_plot)
                 for i, (key, turbine) in enumerate(dfs.items()):
                     if not turbine.empty:
                         name_plot = key.replace('_', ' ').replace('ug', 'UG-')
                         st.write(name_plot)
                         st.bar_chart(turbine, use_container_width=True)
-
-                        # column = st.selectbox('Selecione a variável', options=df.columns.tolist(),
-                        #                       key=f"{name_table}_var_{i}")
-                        # period = st.selectbox('Selecione o período', options=['1 hora', 'dia', 'semana', 'mês'],
-                        #                       key=f"{name_table}_period_{i}")
-
-                        # # Cria um botão para chamar a função get_period
-                        # if st.button('Setar informações',key=f"{name_table}_btn_{i}"):
-                        #     # Chama a função get_period com a coluna e o período selecionados
-                        #     if 'acumulador_energia' in column:
-                        #         result = db.calculate_production(df, column, period)
-                        #         st.write(result)
-                        #     # Força a atualização da página
-                        #     st.rerun()
+        # segunda coluna
         with col[1]:
             with st.container(height=altura):
                 titulo('Métricas', f'Última atualização {data_hora_db}')
@@ -177,7 +160,7 @@ def minisparklines(name_table):
                         col1, col2, col3 = st.columns(3)
                     name = coll.replace('_', ' ').replace('ug', 'UG-')
                     unit = get_unit(coll)
-                    valor = f'{str(df[coll].values[-1])} {unit}'
+                    valor = f'{str(round(df[coll].values[-1],2))} {unit}'
                     percent = f'{round((df[coll].values[-1] - get_previous_non_zero(df[coll].values[:-1])) / get_previous_non_zero(df[coll].values[:-1]) * 100, 2)} %'
                     prompt += f'{name}: {valor} ({percent}) \n'
                     if count % 3 == 0:
@@ -188,31 +171,36 @@ def minisparklines(name_table):
                         col3.metric(name, valor, percent)
                     count += 1
                     style_metric_cards()
-        # segunda coluna
+
+        # terceira coluna
+        print('--------------------------------------------------------------')
+        print('Prompt: ', prompt, len(prompt))
+        print('--------------------------------------------------------------')
         with col[2]:
             with st.container(height=altura):
                 titulo('HAWKING IA ', f'Última atualização {data_hora_atual}')
 
                 if resp == None:
                     resp = gemini(prompt)
-                st.write(resp)
+                    print('Resposta: ', resp)
+                    if '<alerta>' in resp:
+                        # usar regex para pegar o texto entre as tags
+                        alerta = re.findall(r'<alerta>(.*?)</alerta>', resp)
+                        for al in alerta:
+                            st.warning(al)
+                        # st.warning(alerta)
 
-        # col = st.columns([.2, .2, .2, .2, .2])
-        # count = 0
-        # # with st.container(height=150):
-        # for coluna in df.columns:
-        #     if 'velocidade' in coluna:
-        #         with col[count]:
-        #             velocidade_atual = df[coluna].values[-1]
-        #             velocidade_referencia = df[coluna].values.mean()
-        #             velocidade_maxima = df[coluna].values.max()
-        #             velocidade_segura = df[coluna].values.mean() * 0.8
-        #             velocidade_atencao = df[coluna].values.mean() * 0.9
-        #             margem_erro = 5
-        #             gauge_chart(velocidade_atual, velocidade_referencia, velocidade_maxima, velocidade_segura, velocidade_atencao, margem_erro)
-        #         count += 1
-                    # gauge_chart(df[coluna].values[-1], 100, 100, 80, 90, 5)
-            # gauge_chart(df['ve'].values[-1], 100, 100, 80, 90, 5)
+                    if '<previsao>' in resp:
+                        # usar regex para pegar o texto entre as tags
+                        previsao = re.findall(r'<previsao>(.*?)</previsao>', resp)
+                        for prev in previsao:
+                            st.info(prev)
+                        # st.info(previsao)
+
+                    if 'Erro' in resp:
+                        st.error(resp)
+
+                    # st.write(resp)
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -322,6 +310,9 @@ def main():
 
     # Usinas
     # get_usinas()
+    # time.sleep(30)
+    #
+    # st.rerun()
 
 
 
