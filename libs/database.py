@@ -92,6 +92,7 @@ class Database:
 
             # inverter o nome das colunas
             columns = [self.reverse_rename(col) for col in columns]
+            print('Columns 1: ', columns)
 
             # Obter todos os dados
             result = cursor.fetchall()

@@ -181,24 +181,6 @@ load_dotenv()
 #
 #                     # st.write(resp)
 
-def get_tables(query):
-    querys = {
-        'name_table': 'SELECT table_name FROM information_schema.tables WHERE table_schema = "railway"',
-        'usinas': 'SELECT * FROM Usinas',
-    }
-    try:
-        # criar uma conexão com o banco de dados
-        with Database() as db:
-            data = db.fetch_all(querys[query])
-            return data
-    except Exception as e:
-        print(e)
-        return pd.DataFrame()
-def get_columns(query):
-    try:
-        # criar uma conexão com o banco de dados
-        query = 'ALTER TABLE Usinas ADD table_name VARCHAR(255) NOT NULL;'
-
 def page_principal():
     ''' Página principal do dashboard que cotém as comparações entre as usinas'''
 
@@ -298,19 +280,3 @@ if __name__ == '__main__':
     #     # se a senha estiver correta, executa o app
     #     main()
 
-    # valor_mega = 450
-    #
-    # producao = 5.259
-    #
-    # custo = 20
-    #
-    # cota = 10
-    #
-    # ganho_bruto = valor_mega * producao
-    #
-    # ganho_liquido = ganho_bruto - (ganho_bruto * 0.20)
-    #
-    # print((valor_mega * producao - ( valor_mega * producao * 20/100)) * cota/100)
-    #
-    #
-    # print(ganho_liquido * 0.1)

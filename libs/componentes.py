@@ -78,12 +78,12 @@ def ranking_component(dados=None):
     ''' Componente 05 - Ranking '''
 
     # executa a função ranking
-    dados = get_ranking()
+    data = get_ranking()
 
     # leitura dos dados se for None
-    if dados is None:
+    if data is None:
         # cria um DataFrame vazio
-        dados = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
+        data = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
 
         # preenche o DataFrame com dados fictícios
         for i in range(10):
@@ -92,10 +92,14 @@ def ranking_component(dados=None):
     # ordena o DataFrame pela eficiência
     # dados = dados.sort_values(by='eficiência', ascending=False)
 
-    # cria um título
-    st.subheader('Ranking')
+    for key, value in data.items():
+        # for k, v in value.items():
+        #     dados.loc[len(dados)] = [k, key, v['producao'], v['nivel_agua'], v['eficiencia']]
+        if len(value) > 0:
+            # cria um título
+            st.subheader('Ranking - {}'.format(key))
 
-    # criar um ranking com todos os valores
-    st.dataframe(dados)
+            # criar um ranking com todos os valores
+            st.dataframe(value)
 
 
