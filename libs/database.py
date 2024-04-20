@@ -1,43 +1,44 @@
-import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
-import os
+import mysql.connector
 import pandas as pd
+import os
 
 load_dotenv()
 
 class Database:
-
+    ''' Classe para gerenciar a conexão com o banco de dados '''
     def __init__(self):
+        ''' Inicializa a classe de conexão com o banco de dados '''
+
+        # Obter as variáveis de ambiente
         self.host = os.getenv('MYSQLHOST')
         self.user = os.getenv('MYSQLUSER')
         self.password = os.getenv('MYSQLPASSWORD')
         self.database = os.getenv('MYSQLDATABASE')
         self.port = os.getenv('MYSQLPORT')
-        # print(f"host: {self.host}, user: {self.user}, password: {self.password}, database: {self.database}, port: {self.port}")
+        self.token = os.getenv('TOKEN')
         self.connection = None
 
     def __enter__(self):
+        ''' Inicia a conexão com o banco de dados '''
+
+        # Conectar ao banco de dados
         self.connect()
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        ''' Fecha a conexão com o banco de dados '''
+
+        # Fechar a conexão com o banco de dados
         self.close()
 
-    def _handle_error(self, err_msg, exception):
-        full_msg = f"class Database: {err_msg}: {exception}"
-        print(full_msg)
-        raise Exception(full_msg)
-
-    def _debug(self, msg):
-        if os.getenv('DEBUG') == 'True':
-            if 'new' in msg:
-                print(f"{'-' * 20} {msg} {'-' * 20}")
-            else:
-                print(msg)
-
     def connect(self):
+        ''' Conecta ao banco de dados '''
+
         try:
+            # Conectar ao banco de dados através do conector mysql e as variáveis de ambiente
             self.connection = mysql.connector.connect(
                 host=self.host,
                 user=self.user,
@@ -47,77 +48,83 @@ class Database:
                 use_pure=True,
                 connection_timeout=30
             )
+
         except Exception as e:
-            self._handle_error("Erro ao conectar ao banco de dados", e)
+            raise Exception("Erro ao conectar ao banco de dados")
 
     def ensure_connection(self):
+        ''' Garante que a conexão com o banco de dados está ativa '''
+
+        # Verificar se a conexão está ativa
         if self.connection is None or not self.connection.is_connected():
             self.connect()
 
     def execute_query(self, query, params=None):
-        try:
-            # self._debug(f"Executando query: {query}, params: {params}")
-            self.ensure_connection()
-            cursor = self.connection.cursor(buffered=True)
-            cursor.execute(query, params or ())
-            self.connection.commit()
-            return cursor
-        except Exception as e:
-            self._handle_error("Erro ao executar query", e)
+        ''' Executa uma query no banco de dados '''
 
-    def fetch_all(self, query, params=None):
         try:
+            # Garantir que a conexão com o banco de dados está ativa
+            self.ensure_connection()
+
+            # Criar um cursor para executar a query
+            cursor = self.connection.cursor(buffered=True)
+
+            # Executar a query
+            cursor.execute(query, params or ())
+
+            # Commitar a query
+            self.connection.commit()
+
+            return cursor
+
+        except Exception as e:
+            raise Exception(f"Erro ao executar query {e}")
+
+    def fetch_all(self, query, params=None)->pd.DataFrame:
+        ''' Busca todos os dados de uma query '''
+
+        try:
+            # Executar a query
             cursor = self.execute_query(query, params)
+
             # Obter os nomes das colunas do cursor
             columns = cursor.column_names
+
             # inverter o nome das colunas
             columns = [self.reverse_rename(col) for col in columns]
+
             # Obter todos os dados
             result = cursor.fetchall()
+
             # Criar um DataFrame com os dados e as colunas
             df = pd.DataFrame(result, columns=columns)
 
             #converter a coluna data_hora para datetime
             if 'data_hora' in df.columns:
                 df['data_hora'] = pd.to_datetime(df['data_hora'])
+
             return df
+
         except Exception as e:
-            self._handle_error("Erro ao buscar todos os dados", e)
+            raise Exception(f"Erro ao executar query {e}")
 
     def close(self):
+        ''' Fecha a conexão com o banco de dados '''
+
         try:
+            # Verificar se a conexão está ativa e fechar
             if self.connection and self.connection.is_connected():
                 self.connection.close()
-        except Exception as e:
-            self._handle_error("Erro ao fechar conexão", e)
 
-    def calculate_production(self, df, column, period):
-        """
-        Calcula a produção de energia corrigida para o período especificado de maneira ajustada.
-        """
-        try:
-            # converter a column para float
-            df[column] = df[column].astype(float)
-            # define o nome da coluna
-            columnp = column + '_p'
-            # Resample para o período desejado e calcula a diferença entre o primeiro e o último valor do período
-            df_resampled = df.resample(period).agg({column: ['first', 'last']})
-            # Calcula a diferença entre o último e o primeiro valor para obter a produção de energia no período
-            df_resampled[columnp] = df_resampled[(column, 'last')] - df_resampled[(column, 'first')]
-            # Limpa o DataFrame para remover níveis múltiplos nas colunas
-            df_resampled.columns = ['First Value', 'Last Value', columnp]
-            # Remove linhas onde a produção é NaN ou 0, pois isso indica que não houve produção no período
-            df_resampled = df_resampled[df_resampled[columnp].notna() & (df_resampled[columnp] != 0)]
-            # exclui as colunas First Value e Last Value
-            df_resampled = df_resampled.drop(columns=['First Value', 'Last Value'])
-
-            return df_resampled
         except Exception as e:
-            self._handle_error("Erro ao calcular a produção de energia", e)
-            return pd.DataFrame()
+            raise Exception(f"Erro ao fechar conexão {e}")
+
 
     def reverse_rename(self, abbr):
+        '''Inverte o nome das colunas'''
+
         try:
+            # Mapeamento dos nomes das colunas
             mapping = {
                 'id': 'id',
                 '101s': 'ug01_status',
@@ -199,7 +206,10 @@ class Database:
                 '7702vmcZ': 'ug02_vibr_mancal_comb_Z',
                 'data_hora': 'data_hora'
             }
+
+            # busca o valor da chave correspondente
             valor = mapping.get(abbr, abbr)
+
             return valor
         except Exception as e:
-            self.error(e)
+            raise Exception(f'Error convert column {e}')
