@@ -82,18 +82,16 @@ def main_calculate(usina, period):
     data_end = (pd.Timestamp.now()).strftime('%Y-%m-%d %H:%M:%S')
 
     # buscar os dados
-    print('### Buscar os dados ###')
+    print('###################################### Buscar os dados ############################################')
     dados = get_datas(usina, data_init, data_end)
-    print('Data:', dados.shape)
+    print(usina, ' Data:', dados.shape)
 
     # separar as colunas que contém energia
-    print('### Separar as colunas que contém energia ###')
     dados.set_index('data_hora', inplace=True)
     dados = dados[[column for column in dados.columns if 'energia' in column.lower()]]
 
     # calcular a produção de energia
     data = {}
-    print('### Calcular a produção de energia ###')
     for s in dados.columns:
         if usina not in data:
             data[usina] = calculate_production(dados, s, period)
@@ -111,11 +109,11 @@ def get_ranking(period='h'):
         df = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
 
         for index in range(0, usinas.shape[0]):         # para cada usina, busca as informações
-
             usina = usinas.loc[index, 'table_name']     # busca o nome da usina
-
             data = main_calculate(usina, period)       # consulta os dados para o período
 
-            return data
+            yield data
+
+        # return data
     except Exception as e:
         raise Exception(f'Erro ao buscar o ranking: {e}')

@@ -77,29 +77,24 @@ def timeline_component(dados=None):
 def ranking_component(dados=None):
     ''' Componente 05 - Ranking '''
 
-    # executa a função ranking
-    data = get_ranking()
-
     # leitura dos dados se for None
-    if data is None:
-        # cria um DataFrame vazio
-        data = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
+    # if data is None:
+    #     # cria um DataFrame vazio
+    #     data = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
+    #
+    #     # preenche o DataFrame com dados fictícios
+    #     for i in range(10):
+    #         dados.loc[i] = [f'2021-01-0{i}', f'Usina {i}', 1000, 100, random.randint(0, 100)]
 
-        # preenche o DataFrame com dados fictícios
-        for i in range(10):
-            dados.loc[i] = [f'2021-01-0{i}', f'Usina {i}', 1000, 100, random.randint(0, 100)]
+    def generate_dataframes():
+        for data in get_ranking():
+            yield data
 
-    # ordena o DataFrame pela eficiência
-    # dados = dados.sort_values(by='eficiência', ascending=False)
-
-    for key, value in data.items():
-        # for k, v in value.items():
-        #     dados.loc[len(dados)] = [k, key, v['producao'], v['nivel_agua'], v['eficiencia']]
-        if len(value) > 0:
-            # cria um título
-            st.subheader('Ranking - {}'.format(key))
-
-            # criar um ranking com todos os valores
-            st.dataframe(value)
+    placeholder = st.empty()
+    for df in generate_dataframes():
+        if isinstance(df, dict):
+            for key, value in df.items():
+                st.subheader('Ranking - {}'.format(key))
+                st.dataframe(value)
 
 
