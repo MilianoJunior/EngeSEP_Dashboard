@@ -85,16 +85,68 @@ def ranking_component(dados=None):
     #     # preenche o DataFrame com dados fictícios
     #     for i in range(10):
     #         dados.loc[i] = [f'2021-01-0{i}', f'Usina {i}', 1000, 100, random.randint(0, 100)]
-
     def generate_dataframes():
         for data in get_ranking():
             yield data
 
     placeholder = st.empty()
-    for df in generate_dataframes():
-        if isinstance(df, dict):
-            for key, value in df.items():
-                st.subheader('Ranking - {}'.format(key))
+    max_columns = 3  # Substitua por seu número desejado de colunas
+    rows_per_column = 1  # Número de rows (gráficos e DataFrames) por coluna
+
+    # Cria uma lista para armazenar grupos de colunas
+    column_groups = [st.columns(max_columns) for _ in range(rows_per_column)]
+    col1, col2 = st.columns(2)
+
+    for i, df in enumerate(generate_dataframes()):
+        for key, value in df.items():
+            col1, col2 = st.columns([3, 7])  # Ajusta o tamanho das colunas
+            with col1:
+                st.subheader(f'{key}')
                 st.dataframe(value)
+            with col2:
+                st.subheader(
+                    f'Energia gerada por hora - {value.index[-1].strftime("%Y-%m-%d %H:%M:%S")}')  # Formata a data e adiciona um título ao gráfico
+                st.bar_chart(value, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+        # if isinstance(df, dict):
+        #     # limpar o placeholder
+        #     print('Executando o placeholder')
+        #     placeholder.empty()
+        #
+        #     # Calcula o índice da coluna e da linha
+        #     col_idx = i % max_columns
+        #     row_idx = i // max_columns % rows_per_column
+        #
+        #     for key, value in df.items():
+        #         with column_groups[row_idx][col_idx]:
+        #             st.subheader(f'Ranking - {key}')
+        #             st.dataframe(value)
+        #             st.bar_chart(value, use_container_width=True)
+        # else:
+        #     # adiciona o valor do progresso
+        #     placeholder.progress(i / 10)
+
+                    # def generate_dataframes():
+    #     for data in get_ranking():
+    #         yield data
+    #
+    # placeholder = st.empty()
+    # max_columns = 10  # Substitua por seu número máximo de colunas
+    # columns = st.columns(max_columns)
+    #
+    # for i, df in enumerate(generate_dataframes()):
+    #     if isinstance(df, dict):
+    #         for key, value in df.items():
+    #             columns[i].subheader('Ranking - {}'.format(key))
+    #             columns[i].dataframe(value)
+    #             columns[i + 1].bar_chart(value[0:100])
+    # col1, col2 = st.columns(2)
+    # for df in generate_dataframes():
+    #     if isinstance(df, dict):
+    #         for key, value in df.items():
+    #             col1.subheader('Ranking - {}'.format(key))
+    #             col1.dataframe(value)
+    #             col1.bar_chart(value[0:100])
+                # st.subheader('Ranking - {}'.format(key))
+                # st.dataframe(value)
 
 
