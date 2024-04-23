@@ -4,6 +4,7 @@ from streamlit_timeline import timeline
 from libs.funcoes import (get_datas, get_ranking)
 import streamlit as st
 import random
+import plotly.graph_objects as go
 import os
 
 def titulo(label, description, color_name="gray-70"):
@@ -116,14 +117,25 @@ def ranking_component(dados=None):
                           delta_color="normal")
                 st.metric(label="Nível Montante Máximo(m)", value=nivel_montante_max, delta=delta_montante,
                           delta_color="normal")
+
+
             with col2:
                 st.subheader(
                     f'Energia gerada por hora - {value.index[-1].strftime("%Y-%m-%d %H:%M:%S")}')  # Formata a data e adiciona um título ao gráfico
-                st.bar_chart(value['potencia_atual_p'], use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+
+                fig = go.Figure(data=go.Bar(y=value['potencia_atual_p']))
+                fig.update_yaxes(range=[0, 3.5])  # Define os limites do eixo y
+                st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+
                 st.subheader(f'Nível de jusante ')
-                st.bar_chart(value['nivel_jusante'], use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+                fig = go.Figure(data=go.Bar(y=value['nivel_jusante']))
+                fig.update_yaxes(range=[403.1, 408.1])  # Define os limites do eixo y
+                st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+
                 st.subheader(f'Nível de montante ')
-                st.bar_chart(value['nivel_montante'], use_container_width=True)
+                fig = go.Figure(data=go.Bar(y=value['nivel_montante']))
+                fig.update_yaxes(range=[403.1, 408.1])  # Define os limites do eixo y
+                st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
         # if isinstance(df, dict):
         #     # limpar o placeholder
         #     print('Executando o placeholder')

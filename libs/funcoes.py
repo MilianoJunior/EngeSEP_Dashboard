@@ -259,7 +259,7 @@ def main_calculate(usina, period, potencia_max=2.5):
         raise Exception(f' main_calculate ->: {e}')
 
 
-def get_ranking(period='h'):
+def get_ranking(period='2min'):
     ''' Retorna o ranking das usinas '''
     try:
         usina = 'cgh_aparecida'
