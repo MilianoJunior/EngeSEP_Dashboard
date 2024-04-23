@@ -203,7 +203,9 @@ def main_calculate(usina, period, potencia_max=2.5):
         dados.set_index('data_hora', inplace=True)
 
         # 7 passo: separar as colunas que contém energia e nível de água
-        column_nivel_agua = [column for column in dados.columns if ('nivel_agua' in column.lower() or 'nivel_jusante' in column.lower())]
+        column_nivel_agua = [column for column in dados.columns if ('nivel_agua' in column.lower() or
+                                                                    'nivel_jusante' in column.lower() or
+                                                                    'nivel_mont' in column.lower())]
         column_energia = [column for column in dados.columns if 'acumulador_energia' in column.lower()]
         energia = dados[column_energia]
         nivel_agua = dados[column_nivel_agua]
@@ -221,6 +223,7 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 11 passo: resample para o período desejado para o nível de água
         nivel_agua = nivel_agua.resample(period).mean()
+
 
         # 12 passo: calcular a eficiência Eficiência[i] = (potencia_atual[i] / potencia_max) / (nivel_atual[i] / nivel_max)
         A1 = potencia_atual / potencia_max

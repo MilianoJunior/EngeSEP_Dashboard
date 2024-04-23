@@ -99,16 +99,31 @@ def ranking_component(dados=None):
 
     for i, df in enumerate(generate_dataframes()):
         for key, value in df.items():
-            col1, col2 = st.columns([3, 7])  # Ajusta o tamanho das colunas
+            col1, col2 = st.columns([3.5, 6.5])  # Ajusta o tamanho das colunas
             with col1:
                 st.subheader(f'{key}')
                 st.dataframe(value)
+                potencia_max = round(value['potencia_atual_p'].max(),3)
+                delta = round(value['potencia_atual_p'].diff().mean(),3)
+                delta_color = "inverse" if delta < 0 else "auto"
+                nivel_jusante_max = round(value['nivel_jusante'].max(),3)
+                nivel_montante_max = round(value['nivel_montante'].max(),3)
+                delta_jusante = round(value['nivel_jusante'].diff().mean(),3)
+                delta_montante = round(value['nivel_montante'].diff().mean(),3)
+                st.metric(label="Potência Máxima(MW)", value=potencia_max, delta=delta,
+                          delta_color="normal")
+                st.metric(label="Nível Jusante Máximo(m)", value=nivel_jusante_max, delta=delta_jusante,
+                          delta_color="normal")
+                st.metric(label="Nível Montante Máximo(m)", value=nivel_montante_max, delta=delta_montante,
+                          delta_color="normal")
             with col2:
                 st.subheader(
                     f'Energia gerada por hora - {value.index[-1].strftime("%Y-%m-%d %H:%M:%S")}')  # Formata a data e adiciona um título ao gráfico
                 st.bar_chart(value['potencia_atual_p'], use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
                 st.subheader(f'Nível de jusante ')
                 st.bar_chart(value['nivel_jusante'], use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+                st.subheader(f'Nível de montante ')
+                st.bar_chart(value['nivel_montante'], use_container_width=True)
         # if isinstance(df, dict):
         #     # limpar o placeholder
         #     print('Executando o placeholder')
