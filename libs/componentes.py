@@ -106,7 +106,9 @@ def ranking_component(dados=None):
             with col2:
                 st.subheader(
                     f'Energia gerada por hora - {value.index[-1].strftime("%Y-%m-%d %H:%M:%S")}')  # Formata a data e adiciona um título ao gráfico
-                st.bar_chart(value, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+                st.bar_chart(value['potencia_atual_p'], use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+                st.subheader(f'Nível de jusante ')
+                st.bar_chart(value['nivel_jusante'], use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
         # if isinstance(df, dict):
         #     # limpar o placeholder
         #     print('Executando o placeholder')

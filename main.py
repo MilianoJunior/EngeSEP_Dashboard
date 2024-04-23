@@ -208,7 +208,7 @@ def page_usinas():
     # criar uma lista com os nomes das usinas com a pagina principal
     pages =  list(tables['nome'].values)
 
-    # remove ponte_serrada
+    # remove ponte_serradastream
     pages.remove('PCH Ponte Serrada')
 
     # cria as abas com as usinas

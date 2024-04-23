@@ -172,7 +172,7 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 2 passo: definir o formato das usinas para dividir os valores
         format_usinas = {
-                        'cgh_aparecida': [1, 1, 405.938],
+                        'cgh_aparecida': [1, 1, 405.5],
                         'cgh_fae': [1, 1, 7224],
                         'cgh_frozza': [1, 1, 455.782],
                         'cgh_granada': [1, 1000, 30594],
@@ -240,12 +240,14 @@ def main_calculate(usina, period, potencia_max=2.5):
         eficiencia = eficiencia.to_frame()
         eficiencia.columns = ['eficiencia']
 
+
         # 14 passo: Exibir o DataFrame resultante
         # print(eficiencia.head())
         print(eficiencia.shape)
 
         # merge com potencia_atual
         eficiencia = eficiencia.merge(potencia_atual, left_index=True, right_index=True)
+        eficiencia = eficiencia.merge(nivel_agua, left_index=True, right_index=True)
 
         data[usina] = eficiencia
 
