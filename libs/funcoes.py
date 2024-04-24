@@ -209,7 +209,7 @@ def main_calculate(usina, period, potencia_max=2.5):
         column_energia = [column for column in dados.columns if 'acumulador_energia' in column.lower()]
         energia = dados[column_energia]
         nivel_agua = dados[column_nivel_agua]
-        nivel_jusante = dados[column_nivel_montante]
+        nivel_montante = dados[column_nivel_montante]
 
         # 8 passo: somar as colunas de energia
         potencia_atual= energia.sum(axis=1)
