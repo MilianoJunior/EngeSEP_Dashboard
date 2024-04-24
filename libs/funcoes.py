@@ -204,11 +204,12 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 7 passo: separar as colunas que contém energia e nível de água
         column_nivel_agua = [column for column in dados.columns if ('nivel_agua' in column.lower() or
-                                                                    'nivel_jusante' in column.lower() or
-                                                                    'nivel_mont' in column.lower())]
+                                                                    'nivel_jusante' in column.lower())]
+        column_nivel_jusante = [column for column in dados.columns if 'nivel_jusante' in column.lower()]
         column_energia = [column for column in dados.columns if 'acumulador_energia' in column.lower()]
         energia = dados[column_energia]
         nivel_agua = dados[column_nivel_agua]
+        nivel_jusante = dados[column_nivel_jusante]
 
         # 8 passo: somar as colunas de energia
         potencia_atual= energia.sum(axis=1)
@@ -223,6 +224,7 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 11 passo: resample para o período desejado para o nível de água
         nivel_agua = nivel_agua.resample(period).mean()
+        nivel_jusante = nivel_jusante.resample(period).mean()
 
 
         # 12 passo: calcular a eficiência Eficiência[i] = (potencia_atual[i] / potencia_max) / (nivel_atual[i] / nivel_max)
@@ -251,6 +253,7 @@ def main_calculate(usina, period, potencia_max=2.5):
         # merge com potencia_atual
         eficiencia = eficiencia.merge(potencia_atual, left_index=True, right_index=True)
         eficiencia = eficiencia.merge(nivel_agua, left_index=True, right_index=True)
+        eficiencia = eficiencia.merge(nivel_jusante, left_index=True, right_index=True)
 
         data[usina] = eficiencia
 
