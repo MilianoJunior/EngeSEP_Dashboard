@@ -200,8 +200,8 @@ def main_calculate(usina, period, potencia_max=2.5):
         # A2 = nivel_agua / nivel_max
 
         # 13 passo: Substitui valores nulos ou 0 por 1 em A1
-        A2 = A2.replace(0, 1)
-        A2 = A2.fillna(1)
+        # A2 = A2.replace(0, 1)
+        # A2 = A2.fillna(1)
 
         # 12 passo:  Merge A1 e A2 com base no índice comum
         # merged_df = A1.merge(A2, left_index=True, right_index=True)
