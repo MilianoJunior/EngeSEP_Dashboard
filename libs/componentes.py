@@ -123,9 +123,10 @@ def ranking_component(dados=None):
                 st.subheader(
                     f'Energia gerada por hora - {value.index[-1].strftime("%Y-%m-%d %H:%M:%S")}')  # Formata a data e adiciona um título ao gráfico
 
-                fig = go.Figure(data=go.Bar(y=value['potencia_atual_p']))
-                fig.update_yaxes(range=[0, 3.5])  # Define os limites do eixo y
-                st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+                # fig = go.Figure(data=go.Bar(y=value['potencia_atual_p']))
+                # fig.update_yaxes(range=[0, 3.5])  # Define os limites do eixo y
+                # st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+                st.bar_chart(value['potencia_atual_p'], use_container_width=True)
 
                 st.subheader(f'Nível de jusante ')
                 fig = go.Figure(data=go.Bar(y=value['nivel_jusante']))
