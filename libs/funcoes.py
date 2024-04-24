@@ -6,7 +6,10 @@ def get_datas(usina,data_init, data_end):
     ''' Retorna os valores de um período '''
 
     try:
-        query = f'SELECT * FROM {usina} WHERE data_hora BETWEEN "2024-04-15" AND "2024-04-25"'
+        query = f'SELECT * FROM {usina} WHERE data_hora BETWEEN "{data_init}" AND "{data_end}"'
+        print('##'*10, usina, '##'*10)
+        print(query)
+        print('##' * 20,'##' * 10)
         with Database() as db:                    # criar uma conexão com o banco de dados
             #  Faz a busca dos dados
             dados = db.fetch_all(query)
@@ -131,7 +134,7 @@ def get_max_nivel(usina):
 
 
 
-def main_calculate(usina, period, potencia_max=2.5):
+def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
     ''' gerencia o cálculo de produção e eficiência '''
 
     try:
@@ -153,10 +156,23 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # atualiza o valor da potencia máxima para o formato da usina
         potencia_max = potencia_max * format_usinas[usina][1]
+        print('----' * 10)
+        print('21111- ', start_date, end_date)
+        print('----' * 10)
 
-        # 3 passo: estabelecer o período de busca
-        data_init = (pd.Timestamp.now() - pd.Timedelta(days=period_get.get(period, 1))).strftime('%Y-%m-%d %H:%M:%S')
-        data_end = (pd.Timestamp.now()).strftime('%Y-%m-%d %H:%M:%S')
+        if start_date is None:
+            # 3 passo: estabelecer o período de busca
+            data_init = (pd.Timestamp.now() - pd.Timedelta(days=period_get.get(period, 1))).strftime('%Y-%m-%d %H:%M:%S')
+            data_end = (pd.Timestamp.now()).strftime('%Y-%m-%d %H:%M:%S')
+            print('----'*10)
+            print('1- ', data_init, data_end)
+            print('----' * 10)
+        else:
+            data_init = start_date.strftime('%Y-%m-%d %H:%M:%S')
+            data_end = end_date.strftime('%Y-%m-%d %H:%M:%S')
+            print('----' * 10)
+            print('2- ',data_init, data_end)
+            print('----' * 10)
 
         # 4 passo: buscar os dados
         dados = get_datas(usina, data_init, data_end)
@@ -232,95 +248,18 @@ def main_calculate(usina, period, potencia_max=2.5):
         raise Exception(f' main_calculate ->: {e}')
 
 
-def get_ranking(period='2min'):
+def get_ranking(period='2min',start_date=None, end_date=None):
     ''' Retorna o ranking das usinas '''
     try:
+        print('----' * 10)
+        print('111- ', start_date, end_date)
+        print('----' * 10)
         usina = 'cgh_aparecida'
         potencia_max = 2.5
-        data = main_calculate(usina, period, potencia_max)  # consulta os dados para o período
-        # usinas = get_tables()  # busca as tabelas do banco de dados
-        #
-        # data = {}  # Inicializa um dicionário vazio para armazenar os dados de todas as usinas
-        #
-        # for index in range(0, usinas.shape[0]):  # para cada usina, busca as informações
-        #     usina = usinas.loc[index, 'table_name']  # busca o nome da usina
-        #
-        #     potencia_max = usinas.loc[index, 'potencia_instalada']
-        #     data_usina = main_calculate(usina, period, potencia_max)  # consulta os dados para o período
-        #     data.update(data_usina)  # Adiciona os dados da usina atual ao dicionário de dados
-        #     print(f'Progresso: {index / usinas.shape[0]}')
-        #     yield index / usinas.shape[0]
-        #
-        # medias = {}
-        # for key, usina in data.items():
-        #     if not usina.empty:
-        #         medias[key] = usina['eficiencia'].mean()
-
-        # print(medias)
-        # # ordena o dicionário de dados com base na média da eficiência
-        #
-        # print(data)
-        # print(type(data))
-
-        #     print(usina, data[usina].shape)
-        # # Calcula a média da eficiência para cada usina e ordena o dicionário de dados com base na média da eficiência
-        # data = {usina: df for usina, df in
-        #         sorted(data.items(), key=lambda item: item[1]['eficiencia'].mean() if 'eficiencia' in item[1].columns and not item[1].empty else float('-inf'), reverse=True)}
-
+        data = main_calculate(usina, period, start_date, end_date, potencia_max)  # consulta os dados para o período
         yield data
     except Exception as e:
         raise Exception(f'Erro ao buscar o ranking: {e}')
 
-# def get_ranking(period='h'):
-#     ''' Retorna o ranking das usinas '''
-#     try:
-#         usinas = get_tables()  # busca as tabelas do banco de dados
-#
-#         # cria um DataFrame vazio
-#         df = pd.DataFrame(columns=['data hora', 'nome', 'producao', 'nível água', 'eficiência'])
-#
-#         data = {}  # Inicializa um dicionário vazio para armazenar os dados de todas as usinas
-#
-#         for index in range(0, usinas.shape[0]):  # para cada usina, busca as informações
-#             usina = usinas.loc[index, 'table_name']  # busca o nome da usina
-#             # get_max_nivel(usina)
-#
-#             potencia_max = usinas.loc[index, 'potencia_instalada']
-#             data_usina = main_calculate(usina, period, potencia_max)  # consulta os dados para o período
-#             data.update(data_usina)  # Adiciona os dados da usina atual ao dicionário de dados
-#
-#         # Calcula a média da eficiência para cada usina e ordena o dicionário de dados com base na média da eficiência
-#         data = {usina: df for usina, df in
-#                 sorted(data.items(), key=lambda item: item[1]['eficiencia'].mean(), reverse=True)}
-#
-#         return data
-#     except Exception as e:
-#         raise Exception(f'Erro ao buscar o ranking: {e}')
 
-    # try:
-    #     usinas = get_tables()                           # busca as tabelas do banco de dados
-    #
-    #     # cria um DataFrame vazio
-    #     df = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
-    #     percent = usinas.shape[0]
-    #
-    #     for index in range(0, usinas.shape[0]):         # para cada usina, busca as informações
-    #         usina = usinas.loc[index, 'table_name']     # busca o nome da usina
-    #         # get_max_nivel(usina)
-    #
-    #         potencia_max = usinas.loc[index, 'potencia_instalada']
-    #         data = main_calculate(usina, period, potencia_max)       # consulta os dados para o período
-    #         data.update(data_usina)  # Adiciona os dados da usina atual ao dicionário de dados
-    #
-    #         # retorna o progresso
-    #         yield index / percent
-    #
-    #     # Calcula a média da eficiência para cada usina e ordena o dicionário de dados com base na média da eficiência
-    #     data = {usina: df for usina, df in
-    #             sorted(data.items(), key=lambda item: item[1]['eficiencia'].mean(), reverse=True)}
-    #
-    #
-    #
-    #     return data
-    # except Exception as e:
-    #     raise Exception(f'Erro ao buscar o ranking: {e}')
+

@@ -78,21 +78,26 @@ def timeline_component(dados=None):
 def ranking_component(dados=None):
     ''' Componente 05 - Ranking '''
 
-    # leitura dos dados se for None
-    # if data is None:
-    #     # cria um DataFrame vazio
-    #     data = pd.DataFrame(columns=['data hora','nome', 'producao','nível água', 'eficiência'])
-    #
-    #     # preenche o DataFrame com dados fictícios
-    #     for i in range(10):
-    #         dados.loc[i] = [f'2021-01-0{i}', f'Usina {i}', 1000, 100, random.randint(0, 100)]
-    period = st.selectbox(
-        'Selecione o período de tempo dos dados',
-        ('2min','h', 'd', 'w', 'm', 'y'),  # Opções para o seletor
-        index=1
-    )
+
+    col1, col2, col3 = st.columns([2.0, 2.0, 2.0])
+    with col1:
+        # seleciona o período de tempo
+        period = st.selectbox(
+            'Selecione o período de tempo dos dados',
+            ('2min', 'h', 'd', 'w', 'm', 'y'),  # Opções para o seletor
+            index=1
+        )
+    with col2:
+        # seleciona a data inicial, que é a data de hoje menos 30 dias
+        data_inicial = (pd.to_datetime('today') - pd.Timedelta(days=30)).strftime('%d-%m-%Y %H:%M:%S')
+        start_date = st.date_input('Data Inicial', value=pd.to_datetime(data_inicial),format="DD-MM-YYYY")
+
+    with col3:
+        # seleciona a data final, que é a data de hoje
+        data_end = pd.to_datetime('today').strftime('%d-%m-%Y %H:%M:%S')
+        end_date = st.date_input('Data Final', value=pd.to_datetime(data_end),format="DD-MM-YYYY")
     def generate_dataframes():
-        for data in get_ranking(period):
+        for data in get_ranking(period, start_date, end_date):
             yield data
 
     placeholder = st.empty()
@@ -101,12 +106,12 @@ def ranking_component(dados=None):
 
     # Cria uma lista para armazenar grupos de colunas
     column_groups = [st.columns(max_columns) for _ in range(rows_per_column)]
-    col1, col2 = st.columns(2)
 
     for i, df in enumerate(generate_dataframes()):
         for key, value in df.items():
             col1, col2 = st.columns([3.5, 6.5])  # Ajusta o tamanho das colunas
             with col1:
+
                 st.subheader(f'{key}')
                 st.dataframe(value)
                 potencia_max = round(value['potencia_atual_p'].max(),3)
@@ -127,10 +132,6 @@ def ranking_component(dados=None):
             with col2:
                 st.subheader(
                     f'Energia gerada por hora - {value.index[-1].strftime("%Y-%m-%d %H:%M:%S")}')  # Formata a data e adiciona um título ao gráfico
-
-                # fig = go.Figure(data=go.Bar(y=value['potencia_atual_p']))
-                # fig.update_yaxes(range=[0, 3.5])  # Define os limites do eixo y
-                # st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
                 st.bar_chart(value['potencia_atual_p'], use_container_width=True)
 
                 st.subheader(f'Nível de jusante ')
@@ -145,43 +146,6 @@ def ranking_component(dados=None):
         # if isinstance(df, dict):
         #     # limpar o placeholder
         #     print('Executando o placeholder')
-        #     placeholder.empty()
-        #
-        #     # Calcula o índice da coluna e da linha
-        #     col_idx = i % max_columns
-        #     row_idx = i // max_columns % rows_per_column
-        #
-        #     for key, value in df.items():
-        #         with column_groups[row_idx][col_idx]:
-        #             st.subheader(f'Ranking - {key}')
-        #             st.dataframe(value)
-        #             st.bar_chart(value, use_container_width=True)
-        # else:
-        #     # adiciona o valor do progresso
-        #     placeholder.progress(i / 10)
 
-                    # def generate_dataframes():
-    #     for data in get_ranking():
-    #         yield data
-    #
-    # placeholder = st.empty()
-    # max_columns = 10  # Substitua por seu número máximo de colunas
-    # columns = st.columns(max_columns)
-    #
-    # for i, df in enumerate(generate_dataframes()):
-    #     if isinstance(df, dict):
-    #         for key, value in df.items():
-    #             columns[i].subheader('Ranking - {}'.format(key))
-    #             columns[i].dataframe(value)
-    #             columns[i + 1].bar_chart(value[0:100])
-    # col1, col2 = st.columns(2)
-    # for df in generate_dataframes():
-    #     if isinstance(df, dict):
-    #         for key, value in df.items():
-    #             col1.subheader('Ranking - {}'.format(key))
-    #             col1.dataframe(value)
-    #             col1.bar_chart(value[0:100])
-                # st.subheader('Ranking - {}'.format(key))
-                # st.dataframe(value)
 
 
