@@ -78,44 +78,12 @@ def calculate_production(df, column, period, usina):
         df_resampled = df_resampled.drop(columns=['First Value', 'Last Value'])
 
         # Divide os valores pelo formato da usina
-        df_resampled[columnp] = df_resampled[columnp] / format_usinas[usina][0]
+        df_resampled[columnp] = df_resampled[columnp]
 
         return df_resampled
 
     except Exception as e:
         raise Exception(f"Erro ao calcular a produção de energia {e}")
-
-def calculate_efficiency(df, column, period):
-    '''
-        Preciso calcular a eficiência de uma usina hidrelétrica.
-
-        A formula para calcular a eficiência é:
-
-        Eficiência[i] = (potencia_atual[i] / potencia_max) / (nivel_atual[i] / nivel_max)
-
-        Os dados estão no seguinte no dataframe,
-
-                                     ug01_acumulador_energia  ug01_nivel_agua  ug02_acumulador_energia
-        data_hora
-        2024-01-18 07:27:57                  1551.85             6880                  2216.64
-        2024-01-18 07:26:57                  1551.85             6880                  2216.63
-        2024-01-18 07:25:57                  1551.85             6879                  2216.62
-        2024-01-18 07:24:57                  1551.85             6880                  2216.61
-        2024-01-18 07:23:57                  1551.85             6880                  2216.60
-
-
-        Onde:
-        - potencia_atual[i] é a soma da coluna ug01_acumulador_energia[i]  e  ug02_acumulador_energia[i] no instante data_hora[i]
-        - potencia_max é a potência nominal da usina que está definida como 2.5
-        - nivel_atual[i] é a ug01_nivel_agua[i] no instante data_hora[i]
-        - nivel_max é o maior valor de ug01_nivel_agua[i] no período
-    '''
-
-    try:
-        pass
-
-    except Exception as e:
-        raise Exception(f"Erro ao calcular a eficiência {e}")
 
 def retirar_outliers(df, column):
     ''' Retira os outliers de um DataFrame '''
@@ -168,7 +136,7 @@ def main_calculate(usina, period, potencia_max=2.5):
 
     try:
         # 1 passo: sanitizar os argumentos
-        period_get = {'h': 1, 'D': 30, 'W': '1W', 'M': '1M', 'Y': '1Y'}
+        period_get = {'h': 2, 'D': 30, 'W': '1W', 'M': '1M', 'Y': '1Y'}
 
         # 2 passo: definir o formato das usinas para dividir os valores
         format_usinas = {
@@ -229,17 +197,18 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 12 passo: calcular a eficiência Eficiência[i] = (potencia_atual[i] / potencia_max) / (nivel_atual[i] / nivel_max)
         A1 = potencia_atual / potencia_max
-        A2 = nivel_agua / nivel_max
+        # A2 = nivel_agua / nivel_max
 
         # 13 passo: Substitui valores nulos ou 0 por 1 em A1
         A2 = A2.replace(0, 1)
         A2 = A2.fillna(1)
 
         # 12 passo:  Merge A1 e A2 com base no índice comum
-        merged_df = A1.merge(A2, left_index=True, right_index=True)
+        # merged_df = A1.merge(A2, left_index=True, right_index=True)
 
         # 13 passo: Dividir os valores de A1 pelos valores de A2
-        eficiencia = merged_df['potencia_atual_p'].div(merged_df[column_nivel_agua[0]])
+        # eficiencia = merged_df['potencia_atual_p'].div(merged_df[column_nivel_agua[0]])
+        eficiencia = A1
 
         # 14 passo: Transformar a série em um DataFrame
         eficiencia = eficiencia.to_frame()
