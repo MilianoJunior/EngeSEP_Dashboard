@@ -6,7 +6,7 @@ def get_datas(usina,data_init, data_end):
     ''' Retorna os valores de um período '''
 
     try:
-        query = f'SELECT * FROM {usina} WHERE data_hora BETWEEN "{data_init}" AND "{data_end}"'
+        query = f'SELECT * FROM {usina} WHERE data_hora BETWEEN "2024-04-15" AND "2024-04-25"'
         with Database() as db:                    # criar uma conexão com o banco de dados
             #  Faz a busca dos dados
             dados = db.fetch_all(query)
@@ -136,7 +136,7 @@ def main_calculate(usina, period, potencia_max=2.5):
 
     try:
         # 1 passo: sanitizar os argumentos
-        period_get = {'h': 2, 'D': 30, 'W': '1W', 'M': '1M', 'Y': '1Y'}
+        period_get = {'h': 1, 'D': 30, 'W': '1W', 'M': '1M', 'Y': '1Y'}
 
         # 2 passo: definir o formato das usinas para dividir os valores
         format_usinas = {
