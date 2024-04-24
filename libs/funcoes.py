@@ -197,18 +197,18 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 12 passo: calcular a eficiência Eficiência[i] = (potencia_atual[i] / potencia_max) / (nivel_atual[i] / nivel_max)
         A1 = potencia_atual / potencia_max
-        # A2 = nivel_agua / nivel_max
+        A2 = nivel_agua / nivel_max
 
         # 13 passo: Substitui valores nulos ou 0 por 1 em A1
-        # A2 = A2.replace(0, 1)
-        # A2 = A2.fillna(1)
+        A2 = A2.replace(0, 1)
+        A2 = A2.fillna(1)
 
         # 12 passo:  Merge A1 e A2 com base no índice comum
-        # merged_df = A1.merge(A2, left_index=True, right_index=True)
+        merged_df = A1.merge(A2, left_index=True, right_index=True)
 
         # 13 passo: Dividir os valores de A1 pelos valores de A2
-        # eficiencia = merged_df['potencia_atual_p'].div(merged_df[column_nivel_agua[0]])
-        eficiencia = A1
+        eficiencia = merged_df['potencia_atual_p'].div(merged_df[column_nivel_agua[0]])
+        # eficiencia = A1
 
         # 14 passo: Transformar a série em um DataFrame
         if isinstance(eficiencia, pd.Series):
@@ -218,7 +218,7 @@ def main_calculate(usina, period, potencia_max=2.5):
 
         # 14 passo: Exibir o DataFrame resultante
         # print(eficiencia.head())
-        print(eficiencia.shape)
+        # print(eficiencia.shape)
 
         # merge com potencia_atual
         eficiencia = eficiencia.merge(potencia_atual, left_index=True, right_index=True)
