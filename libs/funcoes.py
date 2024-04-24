@@ -211,7 +211,8 @@ def main_calculate(usina, period, potencia_max=2.5):
         eficiencia = A1
 
         # 14 passo: Transformar a série em um DataFrame
-        eficiencia = eficiencia.to_frame()
+        if isinstance(eficiencia, pd.Series):
+            eficiencia = eficiencia.to_frame()
         eficiencia.columns = ['eficiencia']
 
 
