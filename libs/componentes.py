@@ -86,8 +86,13 @@ def ranking_component(dados=None):
     #     # preenche o DataFrame com dados fictícios
     #     for i in range(10):
     #         dados.loc[i] = [f'2021-01-0{i}', f'Usina {i}', 1000, 100, random.randint(0, 100)]
+    period = st.selectbox(
+        'Selecione o período de tempo dos dados',
+        ('2min','h', 'd', 'w', 'm', 'y'),  # Opções para o seletor
+        index=1
+    )
     def generate_dataframes():
-        for data in get_ranking():
+        for data in get_ranking(period):
             yield data
 
     placeholder = st.empty()
