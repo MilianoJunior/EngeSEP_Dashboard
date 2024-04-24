@@ -217,7 +217,7 @@ def main_calculate(usina, period, potencia_max=2.5):
         potencia_atual.columns = ['potencia_atual']
 
         # 9 passo: Potencia maxima está definida, definir o nível de água máximo
-        nivel_max = format_usinas[usina][2]
+        nivel_max = nivel_agua.max() #format_usinas[usina][2]
 
         # 10 passo: resample para o período desejado
         potencia_atual = calculate_production(potencia_atual, 'potencia_atual', period, usina)
