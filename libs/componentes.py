@@ -118,7 +118,7 @@ def select_date():
     # seleciona a data final
     with col3:
         # seleciona a data final, que é a data de hoje
-        data_end = pd.to_datetime('today').strftime('%d-%m-%Y %H:%M:%S')
+        data_end = (pd.to_datetime('today') + pd.Timedelta(days=1)).strftime('%d-%m-%Y %H:%M:%S')
         end_date = st.date_input('Data Final', value=pd.to_datetime(data_end, dayfirst=True), format="DD-MM-YYYY")
 
     # retorna o período de tempo, a data inicial e a data final
@@ -190,7 +190,7 @@ def energia_component(dados, period, start_date, end_date):
     fig.update_layout(title=f'Eficência : {start_date} até {end_date}')
 
     # Mostrando o gráfico no Streamlit
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=False)
 
 
 
@@ -247,7 +247,7 @@ def energia_bar_component(dados, period, start_date, end_date):
     # chart_data = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
 
     # st.bar_chart(chart_data)
-    fig = go.Figure(data=go.Bar(y=dados['acumulador_energia_p']))
+    fig = go.Figure(data=go.Bar(y=dados['acumulador_energia_p'], x=dados.index))
     start_date = start_date.strftime('%d-%m-%Y')
     end_date = end_date.strftime('%d-%m-%Y')
 
@@ -267,7 +267,7 @@ def ranking_component(dados=None):
             yield data
 
     # cria as colunas
-    col1, col2, col3 = st.columns([3.0, 4.0, 3.0])  # Ajusta o tamanho das colunas
+    col1, col2, col3 = st.columns([3.3, 4.0, 2.7], gap='small')  # Ajusta o tamanho das colunas
 
     usina = 'cgh_aparecida'
 
