@@ -68,11 +68,6 @@ def check_password():
 def timeline_component(dados=None):
     ''' Componente 04 - Timeline '''
 
-    # leitura dos dados se for None
-    # if dados is None:
-    #     with open('libs\dados.json', "r") as f:
-    #         dados = f.read()
-
     # cria um título
     st.subheader('Timeline')
 
@@ -179,18 +174,22 @@ def energia_component(dados, period, start_date, end_date):
     ''' Preciso criar um gráfico de pizza com a energia acumulada, onde o valor de referência é a potência nominal da usina'''
     # calcula o intervalo de tempo em horas
     intervalo = (end_date - start_date).total_seconds() / 3600
-    periodo = {'2 min': 2/60, '30 min': 1/2, 'Hora': intervalo, 'Diário': intervalo, 'Semanal': intervalo, 'Mensal': intervalo, 'Anual': intervalo}
+    periodo = {'2min': 2/60, '30min': 1/2, 'h': intervalo, 'd': intervalo, 'w': intervalo, 'm': intervalo, 'YE': intervalo}
     potencia_nominal = 3.15  # MW/h
     referencia = potencia_nominal * periodo.get(period, 1)
 
+    producao = dados['acumulador_energia_p'].sum()
+
+    print(producao, referencia, period, intervalo)
+
     fig = go.Figure()
-    fig.add_trace(go.Pie(labels=['Energia Acumulada', 'Potência Nominal'], values=[150, referencia], hole=0.5))
+    fig.add_trace(go.Pie(labels=['Energia Acumulada', 'Potência Nominal'], values=[producao, referencia], hole=0.7))
 
     # Configurando layout do gráfico
     fig.update_layout(title=f'Eficência : {start_date} até {end_date}')
 
     # Mostrando o gráfico no Streamlit
-    st.plotly_chart(fig, use_container_width=False)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
@@ -200,7 +199,7 @@ def get_image_base64(image_path):
 
 def chatbot_component():
     ''' Componente 09 - Chatbot personalizado '''
-    st.write("IA - Hawkings")
+    st.write("IA - Hawking")
     messages = st.empty()
 
     # Obtém o caminho absoluto para o diretório do script Python
@@ -217,7 +216,7 @@ def chatbot_component():
 
     # Adicionar mensagem inicial do hawkings
     if len(st.session_state.chatbot_messages) == 0:
-        message = "Olá, eu sou o Hawkings, como posso te ajudar?"
+        message = "Olá, eu sou o Hawking, como posso te ajudar?"
         st.session_state.chatbot_messages.append(message)
         messages.markdown(f"""
                         <div style="display: flex; align-items: center; margin-bottom: 20px;">
@@ -239,6 +238,15 @@ def chatbot_component():
                     </div>
                 </div>
             """, unsafe_allow_html=True)
+
+def statistics_component(data_df):
+    ''' Componente 10 - Estatísticas '''
+
+    # Gera estatísticas descritivas
+    stats_df = data_df.describe()
+
+    # Mostra as estatísticas no Streamlit
+    st.dataframe(stats_df)
 
 def energia_bar_component(dados, period, start_date, end_date):
     ''' Componente 08 - Energia acumulada Pie'''
@@ -268,6 +276,8 @@ def ranking_component(dados=None):
 
     # cria as colunas
     col1, col2, col3 = st.columns([3.3, 4.0, 2.7], gap='small')  # Ajusta o tamanho das colunas
+
+    col11, col12 = st.columns([0.5, 0.5], gap='small')  # Ajusta o tamanho das colunas
 
     usina = 'cgh_aparecida'
 
@@ -307,11 +317,14 @@ def ranking_component(dados=None):
         energia_bar_component(df_energia, period, start_date, end_date)
 
     with col3:
-        # energia acumulada
+        # with col11:
+            # energia do gerador
         energia_component(df_energia, period, start_date, end_date)
+    # with col12:
+        statistics_component(df)
 
         # temperatura do gerador
-        temperatura_component(df_nivel, start_date, end_date)
+        # temperatura_component(df_nivel, start_date, end_date)
 
 
     # for i, df in enumerate(generate_dataframes()):
