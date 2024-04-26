@@ -1,6 +1,8 @@
 # Importar as bibliotecas
 from libs.database import Database
 import pandas as pd
+import time
+import numpy as np
 
 def get_datas(usina,data_init, data_end):
     ''' Retorna os valores de um período '''
@@ -24,6 +26,60 @@ def get_datas(usina,data_init, data_end):
     except Exception as e:
         raise Exception(f'Erro ao buscar os dados: {e}')
 
+def get_energia(usina, data_init, data_end):
+    ''' Retorna os valores de energia para um período '''
+
+    try:
+        # query para retornar os valores da tabela
+        query = f'SELECT data_hora, acumulador_energia FROM {usina} WHERE data_hora BETWEEN "{data_init}" AND "{data_end}"'
+
+        with Database() as db:                    # criar uma conexão com o banco de dados
+            dados = db.fetch_all(query)           #  Faz a busca dos dados
+
+            # se não houver valores, retorna os últimos 20000 valores
+            if dados.shape[0] == 0:
+                query = f'SELECT * FROM {usina} ORDER BY id DESC LIMIT 200'     # query para retornar os valores da tabela
+                return db.fetch_all(query)                                      # retorna os valores da tabela
+
+            return dados                           # retorna os valores da tabela
+
+    except Exception as e:
+        raise Exception(f'Erro ao buscar os dados: {e}')
+
+def get_niveis(usina, data_init, data_end):
+    ''' Retorna os valores de um período '''
+
+    try:
+        # query para retornar os valores da tabela
+        query = f'SELECT data_hora, nivel_montante, nivel_jusante FROM {usina} WHERE data_hora BETWEEN "{data_init}" AND "{data_end}"'
+
+        with Database() as db:                    # criar uma conexão com o banco de dados
+            dados = db.fetch_all(query)           #  Faz a busca dos dados
+
+            # se não houver valores, retorna os últimos 20000 valores
+            if dados.shape[0] == 0:
+                query = f'SELECT * FROM {usina} ORDER BY id DESC LIMIT 200'     # query para retornar os valores da tabela
+                return db.fetch_all(query)                                      # retorna os valores da tabela
+
+            return dados          # retorna os valores da tabela
+
+    except Exception as e:
+        raise Exception(f'Erro ao buscar os dados: {e}')
+
+def resample_data(df, period):
+    ''' Resample dos dados para o período desejado '''
+
+    try:
+        df['data_hora'] = pd.to_datetime(df['data_hora'])  # converter a coluna data_hora para datetime
+        df.set_index('data_hora', inplace=True)            # setar a coluna data_hora como index
+        df_resampled = df.resample(period).mean()          # resample para o período desejado
+        # df_resampled.columns = df_resampled.columns.droplevel()     # Limpa o DataFrame para remover níveis múltiplos nas colunas
+
+        return df_resampled
+
+    except Exception as e:
+        raise e
+
 def get_columns(usina):
     ''' Retorna as colunas da tabela '''
 
@@ -46,21 +102,13 @@ def get_tables():
     except Exception as e:
         raise Exception(f'Erro ao buscar as tabelas: {e}')
 
-def calculate_production(df, column, period, usina):
+def calculate_production(df, column, period):
     '''Calcula a produção de energia corrigida para o período especificado de maneira ajustada.'''
 
     try:
-        format_usinas = {
-            'cgh_aparecida': [1, 1],
-            'cgh_fae': [1, 1000],
-            'cgh_frozza': [1, 1],
-            'cgh_granada': [1, 100],
-            'cgh_maria_luz': [1, 100],
-            'cgh_parisoto': [1, 1],
-            'cgh_ponte_caida': [1, 100],
-            'cgh_ponte_serrada': [1, 1],
-            'cgh_sebastiao_paz_almeida': [1, 1],
-        }
+
+        df['data_hora'] = pd.to_datetime(df['data_hora'])  # converter a coluna data_hora para datetime
+        df.set_index('data_hora', inplace=True)          # setar a coluna data_hora como index
 
         df[column] = df[column].astype(float)           # converter a column para float
         columnp = column + '_p'                         # cria uma nova coluna para a produção de energia
@@ -156,23 +204,14 @@ def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
 
         # atualiza o valor da potencia máxima para o formato da usina
         potencia_max = potencia_max * format_usinas[usina][1]
-        print('----' * 10)
-        print('21111- ', start_date, end_date)
-        print('----' * 10)
 
         if start_date is None:
             # 3 passo: estabelecer o período de busca
             data_init = (pd.Timestamp.now() - pd.Timedelta(days=period_get.get(period, 1))).strftime('%Y-%m-%d %H:%M:%S')
             data_end = (pd.Timestamp.now()).strftime('%Y-%m-%d %H:%M:%S')
-            print('----'*10)
-            print('1- ', data_init, data_end)
-            print('----' * 10)
         else:
             data_init = start_date.strftime('%Y-%m-%d %H:%M:%S')
             data_end = end_date.strftime('%Y-%m-%d %H:%M:%S')
-            print('----' * 10)
-            print('2- ',data_init, data_end)
-            print('----' * 10)
 
         # 4 passo: buscar os dados
         dados = get_datas(usina, data_init, data_end)
@@ -196,7 +235,7 @@ def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
         nivel_montante = dados[column_nivel_montante]
 
         # 8 passo: somar as colunas de energia
-        potencia_atual= energia.sum(axis=1)
+        # potencia_atual= energia.sum(axis=1)
         potencia_atual = potencia_atual.to_frame()
         potencia_atual.columns = ['potencia_atual']
 
@@ -204,11 +243,11 @@ def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
         nivel_max = nivel_agua.max() #format_usinas[usina][2]
 
         # 10 passo: resample para o período desejado
-        potencia_atual = calculate_production(potencia_atual, 'potencia_atual', period, usina)
+        potencia_atual = calculate_production(potencia_atual, 'potencia_atual', period)
 
         # 11 passo: resample para o período desejado para o nível de água
-        nivel_agua = nivel_agua.resample(period).mean()
-        nivel_montante = nivel_montante.resample(period).mean()
+        # nivel_agua = nivel_agua.resample(period).mean()
+        # nivel_montante = nivel_montante.resample(period).mean()
 
 
         # 12 passo: calcular a eficiência Eficiência[i] = (potencia_atual[i] / potencia_max) / (nivel_atual[i] / nivel_max)
@@ -238,10 +277,11 @@ def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
 
         # merge com potencia_atual
         eficiencia = eficiencia.merge(potencia_atual, left_index=True, right_index=True)
-        eficiencia = eficiencia.merge(nivel_agua, left_index=True, right_index=True)
-        eficiencia = eficiencia.merge(nivel_montante, left_index=True, right_index=True)
+        # eficiencia = eficiencia.merge(nivel_agua, left_index=True, right_index=True)
+        nivel = nivel_agua.merge(nivel_montante, left_index=True, right_index=True)
 
-        data[usina] = eficiencia
+        data[usina]['energia'] = eficiencia
+        data[usina]['nivel'] = nivel
 
         return data
     except Exception as e:
@@ -251,6 +291,7 @@ def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
 def get_ranking(period='2min',start_date=None, end_date=None):
     ''' Retorna o ranking das usinas '''
     try:
+        inicio = time.time()
         print('----' * 10)
         print('111- ', start_date, end_date)
         print('----' * 10)

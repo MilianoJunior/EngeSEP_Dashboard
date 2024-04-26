@@ -49,3 +49,7 @@ Os parâmetros que influenciam na geração de energia e são possíveis de ajus
 
 Pode me ajudar a criar esse indicador de eficiência e o ranking das usinas que estão gerando mais energia?
 '''
+'''
+Considere a seguinte imagem em anexo, preciso criar uma caricatura desta imagem, preciso que ela seja realista com os
+mesmos traços da imagem, mas que não seja uma cópia fiel, preciso que seja uma caricatura, que não seja engraçada
+'''

@@ -32,7 +32,7 @@ def page_principal():
     ''' Página principal do dashboard que cotém as comparações entre as usinas'''
 
     # inserir o título
-    titulo('Principal', 'Página principal')
+    titulo('CGH Aparecida', 'Página principal')
 
     # ranking
     ranking_component()

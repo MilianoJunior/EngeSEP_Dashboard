@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import mysql.connector
 import pandas as pd
 import os
+import time
 
 load_dotenv()
 
@@ -58,6 +59,32 @@ class Database:
         # Verificar se a conexão está ativa
         if self.connection is None or not self.connection.is_connected():
             self.connect()
+
+    def insert_data(self, table, data: pd.DataFrame):
+        ''' Insere dados em uma tabela do banco de dados '''
+
+        try:
+            # Garantir que a conexão com o banco de dados está ativa
+            self.ensure_connection()
+
+            # Criar um cursor para executar a query
+            cursor = self.connection.cursor(buffered=True)
+
+            # Inserir os dados na tabela
+            for index, row in data.iterrows():
+                if index > 10:
+                    query = f"INSERT INTO {table} ({','.join(data.columns)}) VALUES ({','.join(['%s']*len(data.columns))})"
+                    cursor.execute(query, tuple(row))
+                    self.connection.commit()
+                    print(f"Inserting row {index} in table {table}")
+                    print(f"Query: {query}")
+                    print(f"Values: {tuple(row)}")
+                    print('-'*50)
+                    time.sleep(0.01)
+
+
+        except Exception as e:
+            raise Exception(f"Erro ao inserir dados na tabela {table} {e}")
 
     def execute_query(self, query, params=None):
         ''' Executa uma query no banco de dados '''
