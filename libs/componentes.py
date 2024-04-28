@@ -170,7 +170,6 @@ def temperatura_component(dados, start_date, end_date):
 def energia_component(dados, period, start_date, end_date):
     ''' Componente 08 - Energia acumulada Pie'''
 
-
     ''' Preciso criar um gráfico de pizza com a energia acumulada, onde o valor de referência é a potência nominal da usina'''
     # calcula o intervalo de tempo em horas
     intervalo = (end_date - start_date).total_seconds() / 3600
@@ -185,12 +184,16 @@ def energia_component(dados, period, start_date, end_date):
     fig = go.Figure()
     fig.add_trace(go.Pie(labels=['Energia Acumulada', 'Potência Nominal'], values=[producao, referencia], hole=0.7))
 
+    # Adiciona anotação no centro do gráfico de pizza
+    fig.update_layout(
+        annotations=[dict(text=f'{round(producao, 2)} MW', x=0.5, y=0.5, font_size=20, showarrow=False, font=dict(color='black'))]
+    )
+
     # Configurando layout do gráfico
     fig.update_layout(title=f'Eficência : {start_date} até {end_date}')
 
     # Mostrando o gráfico no Streamlit
     st.plotly_chart(fig, use_container_width=True)
-
 
 
 def get_image_base64(image_path):
@@ -241,6 +244,9 @@ def chatbot_component():
 
 def statistics_component(data_df):
     ''' Componente 10 - Estatísticas '''
+
+    # Cria um título
+    st.subheader('Estatísticas')
 
     # Gera estatísticas descritivas
     stats_df = data_df.describe()
