@@ -3,7 +3,7 @@ from streamlit_extras.colored_header import colored_header
 from streamlit_timeline import timeline
 from libs.funcoes import (get_datas, get_ranking, get_niveis, resample_data, get_energia, calculate_production)
 import streamlit as st
-import tensorflow as tf
+# import tensorflow as tf
 import random
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -11,7 +11,7 @@ import plotly.express as px
 import os
 import numpy as np
 import base64
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 from libs.api import gemini
 def titulo(label, description, color_name="gray-70"):
     ''' Componente 01 -  Cria um título com descrição '''
