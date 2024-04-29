@@ -3,6 +3,7 @@ from streamlit_extras.colored_header import colored_header
 from streamlit_timeline import timeline
 from libs.funcoes import (get_datas, get_ranking, get_niveis, resample_data, get_energia, calculate_production)
 import streamlit as st
+import tensorflow as tf
 import random
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -10,6 +11,8 @@ import plotly.express as px
 import os
 import numpy as np
 import base64
+from sklearn.model_selection import train_test_split
+from libs.api import gemini
 def titulo(label, description, color_name="gray-70"):
     ''' Componente 01 -  Cria um título com descrição '''
 
@@ -144,13 +147,11 @@ def niveis_component(dados, start_date, end_date):
 def temperatura_component(dados, start_date, end_date):
     ''' Componente 08 - Temperatura do gerador '''
 
-
     # Cria um DataFrame com dados aleatórios
     dados = pd.DataFrame(index=range(0, 10), columns=[f'temperatura_gerador_{str(s)}' for s in range(0, 10)])
     for s in range(0, 10):
         for p in range(0, 10):
             dados.loc[s, f'temperatura_gerador_{str(p)}'] = random.randint(0, 100)
-
 
     fig = go.Figure()
     for i in range(0, 10):
@@ -200,7 +201,7 @@ def get_image_base64(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode('utf-8')
 
-def chatbot_component():
+def chatbot_component(df):
     ''' Componente 09 - Chatbot personalizado '''
     st.write("IA - Hawking")
     messages = st.empty()
@@ -217,9 +218,26 @@ def chatbot_component():
     if "chatbot_messages" not in st.session_state:
         st.session_state.chatbot_messages = []
 
+
+
     # Adicionar mensagem inicial do hawkings
     if len(st.session_state.chatbot_messages) == 0:
-        message = "Olá, eu sou o Hawking, como posso te ajudar?"
+
+        prompt_init = '''De acordo com as informações abaixo, Quanto de energia foi gerada hoje e no total? /n'''
+
+        if not df.empty:
+            colunas = list(df.columns)
+            for i, row in df.iterrows():
+                prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]],2)} {colunas[1]}: {round(row[colunas[1]],2)}  {colunas[2]}: {round(row[colunas[2]],2)} /n'''
+
+        # print(prompt_init)
+
+        resp = gemini(prompt_init)
+
+        message = resp
+
+
+        # message = "Olá, eu sou o Hawking, como posso te ajudar?"
         st.session_state.chatbot_messages.append(message)
         messages.markdown(f"""
                         <div style="display: flex; align-items: center; margin-bottom: 20px;">
@@ -313,7 +331,7 @@ def ranking_component(dados=None):
         st.dataframe(df)
 
         # cria um objeto chatbot
-        chatbot_component()
+        chatbot_component(df)
 
     with col2:
         # nivel de jusante e montante
@@ -332,44 +350,299 @@ def ranking_component(dados=None):
         # temperatura do gerador
         # temperatura_component(df_nivel, start_date, end_date)
 
+def normalizacao(df):
+    ''' Normalização dos dados '''
+    # normaliza os dados
+    df['nivel_montante_norm'] = (df['nivel_montante'] - df['nivel_montante'].min()) / (df['nivel_montante'].max() - df['nivel_montante'].min())
+    df['nivel_jusante_norm'] = (df['nivel_jusante'] - df['nivel_jusante'].min()) / (df['nivel_jusante'].max() - df['nivel_jusante'].min())
+    df['distribuidor_norm'] = (df['distribuidor'] - df['distribuidor'].min()) / (df['distribuidor'].max() - df['distribuidor'].min())
+    df['rotor_norm'] = (df['posicao_rotor'] - df['posicao_rotor'].min()) / (df['posicao_rotor'].max() - df['posicao_rotor'].min())
 
-    # for i, df in enumerate(generate_dataframes()):
-    #     for key, value in df.items():
+    return df
+
+def modelo_matematico():
+    ''' Modelo matemático da usina '''
+
+    # cria o modelo
+    modelo = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(4, activation='relu'),
+        tf.keras.layers.Dense(4, activation='relu'),
+        tf.keras.layers.Dense(1, activation='linear')  # Alterado para 'linear' para saída contínua
+    ])
+
+    # compila o modelo
+    modelo.compile(optimizer='adam', loss='mse', metrics=['mae', 'mse'])  # Adicionado mae como métrica
+
+    return modelo
+
+
+def rede_neural_analise(df):
+    ''' Rede neural que encontra o modelo matemático da usina '''
+    # entrada: nivel_montante, nivel_jusante, distribuidor, rotor
+    # saída: energia gerada
+
+    # normalização dos dados
+    df = normalizacao(df)
+
+    # separa os dados em treino e teste
+    X = df[['nivel_montante_norm', 'nivel_jusante_norm', 'distribuidor_norm', 'rotor_norm']]
+    y = df['acumulador_energia']
+
+    # separa os dados em treino e teste (80% treino e 20% teste)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # cria o modelo
+    modelo = modelo_matematico()
+
+    # treina o modelo
+    modelo.fit(X_train, y_train, epochs=250)
+
+    # verifica a acurácia do modelo treinado
+    loss = modelo.evaluate(X, y)
+
+    # imprime a acurácia
+    print('Acurácia do modelo:', loss)
+
+    return modelo
+
+
+
+
+
+def analise_dados():
+    ''' Componente 11 - Análise de dados '''
+
+    # pass
+
+    path = os.path.join(os.getcwd(), 'data', f'all_dados.csv')
+
+    # leitura dos dados, com index none
+    dados = pd.read_csv(path, sep=';', encoding='latin1', index_col=False)
+
+    print(dados.columns)
     #
-    #         with col1:
-    #             print(value)
+    # dados.columns = ['Nome', 'CPF', 'Cargo', 'OrgaoExercicio', 'OrgaoOrigem',
+    #                  'UnidadeExercicio', 'Situacao', 'ValorBruto']
 
-                # energia = value['energia']
-                # st.dataframe(value)
-                # potencia_max = round(energia['potencia_atual_p'].max(),3)
-                # delta = round(energia['potencia_atual_p'].diff().mean(),3)
-                # delta_color = "inverse" if delta < 0 else "auto"
-                # nivel_jusante_max = round(energia['nivel_jusante'].max(),3)
-                # nivel_montante_max = round(energia['nivel_montante'].max(),3)
-                # delta_jusante = round(energia['nivel_jusante'].diff().mean(),3)
-                # delta_montante = round(energia['nivel_montante'].diff().mean(),3)
-                # st.metric(label="Potência Máxima(MW)", value=potencia_max, delta=delta,
-                #           delta_color="normal")
-                # st.metric(label="Nível Jusante Máximo(m)", value=nivel_jusante_max, delta=delta_jusante,
-                #           delta_color="normal")
-                # st.metric(label="Nível Montante Máximo(m)", value=nivel_montante_max, delta=delta_montante,
-                #           delta_color="normal")
-            #
-            # with col2:
-            #     pass
-                # nivel = value['nivel']
-                # energia = value['energia']
-                # st.bar_chart(energia['potencia_atual_p'], use_container_width=True)
-                # niveis_component(nivel)
-                # with col11:
-                #     fig = go.Figure(data=go.Bar(y=value['nivel_jusante']))
-                #     fig.update_yaxes(range=[403.1, 408.1])  # Define os limites do eixo y
-                #     st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
-                # with col12:
-                #     fig = go.Figure(data=go.Bar(y=value['nivel_montante']))
-                #     fig.update_yaxes(range=[403.1, 408.1])  # Define os limites do eixo y
-                #     st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
+    st.dataframe(dados)
 
+
+    st.dataframe(dados['Situacao'].value_counts())
+
+    # converter a coluna valor bruto para float
+    dados['ValorBruto'] = dados['ValorBruto'].str.replace(',', '.').astype(float)
+
+    # orgão de origem value counts
+    qtd = dados['OrgaoOrigem'].value_counts().to_frame()
+
+    qtd['OrgaoOrigem'] = qtd.index
+
+    qtd.rename(columns={'count': 'Quantidade (mil)'}, inplace=True)
+
+    # acrecenta a coluna contador que começa em 1 até o tamanho do dataframe, preciso que a P
+    qtd['Posicao'] = range(1, len(qtd) + 1)
+
+    qtd.set_index('Posicao', inplace=True)
+    # qtd['Contador'] = dados.groupby('OrgaoOrigem')['OrgaoOrigem'].transform('count')
+
+    st.subheader('Quantidade de servidores por órgão de origem - Ativos e Inativos')
+    # aumentar a altura da tabela
+    st.dataframe(qtd, height=1000)
+
+    # soma dos valores brutos por orgão de origem
+    soma = dados.groupby('OrgaoOrigem')['ValorBruto'].sum().to_frame()
+
+    # ordena os valores
+    soma.sort_values(by='ValorBruto', ascending=False, inplace=True)
+
+    st.dataframe(soma)
+
+    # cria um gráfico de barras
+    fig = px.bar(soma, x=soma.index, y='ValorBruto', title='Valor Bruto de despesas por Órgão de Origem')
+    st.plotly_chart(fig, use_container_width=True)
+
+
+    # criar dataframe com o percapita por orgão de origem
+    percapita = dados.groupby('OrgaoOrigem')['ValorBruto'].sum().to_frame()
+
+    percapita['Quantidade'] = dados['OrgaoOrigem'].value_counts()
+    percapita['PerCapita'] = percapita['ValorBruto'] / percapita['Quantidade']
+    percapita.sort_values(by='PerCapita', ascending=False, inplace=True)
+    percapita['OrgaoOrigem'] = percapita.index
+    percapita['Posicao'] = range(1, len(percapita) + 1)
+    percapita.set_index('Posicao', inplace=True)
+
+    # Cria uma nova coluna 'color' que tem o valor 'highlight' para "SECRETARIA DE ESTADO DA ADMINISTRACAO PRISIONAL E SOCIOEDUCATIVA"
+    # e 'default' para todos os outros valores
+    percapita['color'] = [
+        'highlight' if orgao == "SECRETARIA DE ESTADO DA ADMINISTRACAO PRISIONAL E SOCIOEDUCATIVA" else 'default' for
+        orgao in percapita.index]
+
+    # Cria um dicionário de cores
+    colors = {'highlight': 'red', 'default': 'blue'}
+
+    # Cria o gráfico de barras
+    fig = px.bar(percapita, x=percapita['OrgaoOrigem'], y='PerCapita',
+                 title='Remuneração média por servidor por Órgão de Origem',
+                 color='color', color_discrete_map=colors)
+
+    # Mostra o gráfico
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.dataframe(percapita)
+
+    # separar os dados em ativos e inativos e mostrar a quantidade de servidores ativos por inativos
+    ativos = dados[dados['Situacao'] == 'ATIVO']
+    inativos = dados[dados['Situacao'] == 'INATIVO']
+
+    # quantidade de servidores ativos e inativos
+    ativos_qtd = ativos['OrgaoOrigem'].value_counts().to_frame()
+    inativos_qtd = inativos['OrgaoOrigem'].value_counts().to_frame()
+    # inativos_qtd[]
+
+    # cria um dataframe com a quantidade de servidores ativos e inativos
+    ativos_qtd['Ativos'] = ativos_qtd.index
+    ativos_qtd['Inativos'] = inativos_qtd['OrgaoOrigem']
+    ativos_qtd['Posicao'] = range(1, len(ativos_qtd) + 1)
+    ativos_qtd.set_index('Posicao', inplace=True)
+
+    # cria um gráfico de barras
+    fig = px.bar(ativos_qtd, x=ativos_qtd.index, y='Ativos', title='Quantidade de servidores ativos e inativos por Órgão de Origem')
+    st.plotly_chart(fig, use_container_width=True)
+
+    # mostrar o dataframe
+    st.dataframe(ativos_qtd)
+
+
+
+
+
+    #
+    # fig = px.bar(percapita, x=percapita.index, y='PerCapita', title='Remuneração média por servidor por Órgão de Origem')
+    # st.plotly_chart(fig, use_container_width=True)
+
+
+    ''' 
+    como coloca quinto em numero
+    5
+    Conclusão:
+        Estamos na secretaria de estado da administração prisional e socioeducativa:
+        - 5 orgão em quantidade de servidores;
+        - 7 orgão em valor bruto de despesas;
+        - 25 orgão em valor médio de despesas por servidor.
+        - 
+        - 
+    '''
+
+
+
+
+    # separar
+
+
+    # # cria as variáveis
+    # usina = 'cgh_aparecida'
+    # data_init = '2024-04-01'
+    # data_end = '2024-04-28'
+    # path = os.path.join(os.getcwd(), 'data', f'{usina}.csv')
+    #
+    # dados_interpolacao = [[10.00, 3.00], [26.00,6.99],[35.00, 14.00],
+    #                       [40.00, 18.01], [45.00,22.00],[50.00, 25.00],
+    #                       [55.00, 28.00], [60.00,34.00],[65.00, 41.00],
+    #                       [70.00, 45.00]]
+    # df_inter = pd.DataFrame(dados_interpolacao, columns=['distribuidor', 'rotor'])
+    #
+    # print(df_inter.head())
+    #
+    # path = os.path.join(os.getcwd(), 'data', f'{usina}.csv')
+    #
+    # # leitura dos dados
+    # try:
+    #     dados = pd.read_csv(path)
+    # except Exception as e:
+    #     print('Erro ao ler os dados', e)
+    #     dados = get_datas(usina, data_init, data_end)
+    #     dados.to_csv(path, index=False)
+    #
+    # # st.dataframe(dados)
+    # st.subheader('Análise de Dados')
+    # # separa as colunas data_hora, acumulador_energia, nivel_montante, nivel_jusante, distribuidor, posicao_rotor
+    #
+    # df_select = dados[['data_hora', 'acumulador_energia', 'nivel_montante', 'nivel_jusante', 'distribuidor', 'posicao_rotor']]
+    #
+    # # mostra os dados
+    # st.dataframe(df_select)
+    #
+    # # Cria um modelo matemático para a usina
+    # modelo = rede_neural_analise(df_select)
+
+
+    '''
+    # criar um heatmap com os dados
+    # cria um gráfico de linha com os dados
+    # criar um heatmap com os dados
+    df_select_corr = df_select.drop('data_hora', axis=1).corr()  # remove a coluna data_hora para a correlação
+    # O Plotly espera listas de strings para os eixos x e y
+    fig = ff.create_annotated_heatmap(
+        z=df_select_corr.to_numpy(),  # usa os valores da matriz de correlação
+        x=df_select_corr.columns.tolist(),  # rótulos das colunas para o eixo x
+        y=df_select_corr.columns.tolist(),  # rótulos das colunas para o eixo y
+        annotation_text=df_select_corr.round(2).to_numpy(),
+        # arredonda os valores para 2 casas decimais para as anotações
+        showscale=True  # mostra a barra de cores com a escala
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Identificar períodos em que a usina está operacional (potência gerada > 0)
+    dados_operacionais = df_select[df_select['acumulador_energia'] > 0]
+
+    # Normalização Min-Max das variáveis de interesse
+    dados_operacionais['rotor_norm'] = (dados_operacionais['posicao_rotor'] - dados_operacionais[
+        'posicao_rotor'].min()) / (dados_operacionais['posicao_rotor'].max() - dados_operacionais[
+        'posicao_rotor'].min())
+    dados_operacionais['distribuidor_norm'] = (dados_operacionais['distribuidor'] - dados_operacionais[
+        'distribuidor'].min()) / (dados_operacionais['distribuidor'].max() - dados_operacionais['distribuidor'].min())
+
+
+    st.dataframe(dados_operacionais)
+
+    # Criar gráficos de linha para as variáveis normalizadas
+    fig = go.Figure()
+
+    # Adicionando a linha do rotor
+    fig.add_trace(go.Scatter(x=dados_operacionais['data_hora'], y=dados_operacionais['rotor_norm'],
+                             mode='lines', name='Rotor Normalizado'))
+
+    # Adicionando a linha do distribuidor
+    fig.add_trace(go.Scatter(x=dados_operacionais['data_hora'], y=dados_operacionais['distribuidor_norm'],
+                             mode='lines', name='Distribuidor Normalizado'))
+
+    # Atualizar layout para adicionar título e labels
+    fig.update_layout(title='Análise do Rotor e Distribuidor ao longo do tempo',
+                      xaxis_title='Data e Hora',
+                      yaxis_title='Valores Normalizados',
+                      hovermode='x')
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    df_select_corr = dados_operacionais.drop('data_hora', axis=1).corr()  # remove a coluna data_hora para a correlação
+
+    fig = ff.create_annotated_heatmap(
+        z=df_select_corr.to_numpy(),  # usa os valores da matriz de correlação
+        x=df_select_corr.columns.tolist(),  # rótulos das colunas para o eixo x
+        y=df_select_corr.columns.tolist(),  # rótulos das colunas para o eixo y
+        annotation_text=df_select_corr.round(2).to_numpy(),
+        # arredonda os valores para 2 casas decimais para as anotações
+        showscale=True  # mostra a barra de cores com a escala
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+    
+
+
+    print(dados.head())
+    print(dados.shape)'''
 
 
 

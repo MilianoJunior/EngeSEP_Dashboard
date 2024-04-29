@@ -12,7 +12,7 @@
 '''
 from streamlit_extras.metric_cards import style_metric_cards
 from st_on_hover_tabs import on_hover_tabs
-from libs.componentes import (titulo, tabs, check_password, timeline_component, ranking_component)
+from libs.componentes import (titulo, tabs, check_password, timeline_component, ranking_component, analise_dados)
 from libs.funcoes import (get_datas, get_tables)
 import plotly.graph_objects as go
 from dotenv import load_dotenv
@@ -36,6 +36,8 @@ def page_principal():
 
     # ranking
     ranking_component()
+
+    # analise_dados()
 
 
 def page_usinas():
