@@ -12,8 +12,9 @@
 '''
 from streamlit_extras.metric_cards import style_metric_cards
 from st_on_hover_tabs import on_hover_tabs
-from libs.componentes import (titulo, tabs, check_password, timeline_component, ranking_component, analise_dados)
+from libs.componentes import (titulo, tabs, check_password, timeline_component, ranking_component) #, analise_dados)
 from libs.funcoes import (get_datas, get_tables)
+# from libs.analise import executor
 import plotly.graph_objects as go
 from dotenv import load_dotenv
 from datetime import datetime
@@ -38,6 +39,12 @@ def page_principal():
     ranking_component()
 
     # analise_dados()
+
+    # executor()
+    # inserir o título
+    # titulo('Configurações', 'Página de configurações')
+
+    # final()
 
 
 def page_usinas():
@@ -103,6 +110,39 @@ def main():
                         page_icon="📊",
                         initial_sidebar_state="expanded",
                      )
+
+    st.markdown("""
+        <style>
+            body {
+                margin: 0; !important
+                padding: 0; !important
+            }
+            .st-emotion-cache-1jicfl2{
+                width: 100%;
+                padding: 0rem 1rem 1rem;
+                min-width: auto;
+                max-width: initial;
+            }
+            .stNumberInput > div {
+                    display: flex;
+                    align-items: center;
+                }
+            .stNumberInput > div > label {
+                    flex: 1;
+                }
+            .stNumberInput > div > div {
+                    flex: 2;
+                }
+            .stButton button {
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    top: 30px;
+                    right: 1px;
+                }
+        </style>
+        """, unsafe_allow_html=True)
+
 
     # Header
     pages()

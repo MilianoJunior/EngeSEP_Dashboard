@@ -1,3 +1,8 @@
+
+*{
+    margin: 0;
+    padding: 0;
+}
 section[data-testid='stSidebar'] {
     background-color: #111;
     flex-shrink: unset !important;
@@ -5,7 +10,7 @@ section[data-testid='stSidebar'] {
 }
 
 .st-emotion-cache-z5fcl4 {
-    padding-top: 10px; /* Ajuste este valor para atender às suas necessidades */
+    padding-top: 1px; /* Ajuste este valor para atender às suas necessidades */
 }
 @media(hover:hover) and (min-width: 600px) and (max-width: 769px){
 

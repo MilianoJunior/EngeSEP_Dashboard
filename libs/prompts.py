@@ -53,3 +53,80 @@ Pode me ajudar a criar esse indicador de eficiência e o ranking das usinas que 
 Considere a seguinte imagem em anexo, preciso criar uma caricatura desta imagem, preciso que ela seja realista com os
 mesmos traços da imagem, mas que não seja uma cópia fiel, preciso que seja uma caricatura, que não seja engraçada
 '''
+
+'''
+Os dados são de unidades geradoras de energia, onde cada tabela representa uma usina, as principais informações
+que estão nas tabelas são:
+    - Energia gerada
+    - Velocidade da turbina;
+    - Tensão das fases;
+    - Corrente das fases;
+    - Fator de potência;
+    - Tensão de sincronismo;
+    - Corrente de sincronismo;
+    - Temperatura do gerador;
+    - Temperatura do óleo das unidades: Lubrificação dos mancais e regulador de velocidade;
+    - Pressão do óleo das unidades;
+    - Nível do óleo das unidades;
+    - Posição do Distribuidor;
+    - Posição do Rotor;
+    
+Preciso otimizar o desempenho da usina, e melhorar a eficiência da geração de energia, para isso preciso ajustar
+as variaveis que são possíveis de ajustar, como a relação entre a posição do distribuidor e a posição do rotor tenho
+a seguinte relação (distribuidor, rotor) em valores percentuais, onde o rotor é a variável passiveis de ajuste:
+
+dados_interpolacao = [[10.00, 3.00], [26.00,6.99],[35.00, 14.00],
+                          [40.00, 18.01], [45.00,22.00],[50.00, 25.00],
+                          [55.00, 28.00], [60.00,34.00],[65.00, 41.00],
+                          [70.00, 45.00]]
+                          
+Verificando os seus resultados, percebi que não expliquei o suficiente sobre a relação entre a posição do distribuidor e a posição do rotor,
+percebi usando o value_counts dos dados para essas duas variaveis que a relação programada via software possui atrasos quando é persistida
+no banco de dados. Mas no final, preciso de uma nova tabela de dados de interpolacao que me ajude a encontrar a melhor relação para a geração
+de energia.
+                          
+Pode me ajudar otimizar o desempenho da usina? 
+                          
+
+'''
+
+'''
+Por favor, em um primeiro momento vamos encontrar as variaveis que complementam melhor a performace do acumulador_energia,
+se vc perceber, essa coluna contem o valor acumulado de energia gerada que está em MWh, a potencia máxima da usina é de 3.150 MWh,
+fiz um resample com o pandas e tenhos os valores de energia gerada a cada 1 hora, vc pode fazer o mesmo e verificar que a eficiência
+da usina está variando bastante, considerando a questão da água no qual a posição do distribuidor e a posição do rotor são variáveis
+para manter o nivel jusante sempre constante, temos também outras possibilidades, mas se me ajudar a formular uma equação que
+me ajude a encontrar a melhor relação entre essas variáveis, seria ótimo. Observe que quando o valor do distribuidor está muito baixo ou valores 
+negativos, o valor percentual do rotor está proximo de 100%, isso significa que a turbina está com a comporta fechada e parada.
+Eu tenho uma ideia para otimizar esses valores, mas pode me sugerir algo?
+
+'''
+
+'''
+Tenho um csv que contem os dados de uma usina geradora de energia, os dados são de 1 em 1 minuto, e contem as seguintes colunas:
+
+Variaveis preditoras:
+
+'temp_uhlm_oleo', 'uhrv_pressao', 'temp_uhrv_oleo', 'distribuidor',
+'velocidade', 'posicao_rotor', 'temp_manc_casq_comb',
+'temp_manc_casq_esc', 'tensao_fase_A', 'tensao_fase_B', 'tensao_fase_C',
+'corrente_fase_A', 'corrente_fase_B', 'corrente_fase_C',
+'corrente_neutro', 'tensao_excitacao', 'corrente_excitacao',
+'frequencia', 'potencia_ativa', 'potencia_reativa', 'potencia_aparente',
+'fp', 'temp_enrol_A', 'temp_enrol_B', 'temp_enrol_C',
+'temp_nucleo_estator_01', 'temp_nucleo_estator_02',
+'temp_nucleo_estator_03', 'temp_tiristor_02', 'temp_tiristor_03',
+'temp_crowbar_01', 'temp_crowbar_02', 'temp_transf_excitacao',
+'temp_casq_rad_comb', 'temp_mancal_casq_guia', 'temp_mancal_cont_esc',
+'nivel_montante', 'nivel_jusante', 'horimetro_eletrico',
+'correnteL_fase_A', 'correnteL_fase_B', 'correnteL_fase_C', 'hora',
+'dia', 'dif_acumulador_energia'
+
+Variavel target:
+
+'acumulador_energia'
+
+Preciso encontrar uma rede neural que represente a geracão de energia, para encontrar a melhor relação entre a posição do distribuidor e a posição do rotor.
+
+
+'''

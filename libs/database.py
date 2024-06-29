@@ -7,18 +7,38 @@ import time
 
 load_dotenv()
 
+senhas = {
+            'remote': {
+                'host': os.getenv('MYSQLHOST'),
+                'user': os.getenv('MYSQLUSER'),
+                'password': os.getenv('MYSQLPASSWORD'),
+                'database': os.getenv('MYSQLDATABASE'),
+                'port': os.getenv('MYSQLPORT'),
+                'token': 'Bearer '
+            },
+            'local': {
+                'host': os.getenv('MYSQLHOST_LOCAL'),
+                'user': os.getenv('MYSQLUSER_LOCAL'),
+                'password': os.getenv('MYSQLPASSWORD_LOCAL'),
+                'database': os.getenv('MYSQLDATABASE_LOCAL'),
+                'port': os.getenv('MYSQLPORT_LOCAL'),
+                'token': 'Bearer '
+            }
+}
+
 class Database:
     ''' Classe para gerenciar a conexão com o banco de dados '''
     def __init__(self):
         ''' Inicializa a classe de conexão com o banco de dados '''
+        choice_db = 'remote'
 
         # Obter as variáveis de ambiente
-        self.host = os.getenv('MYSQLHOST')
-        self.user = os.getenv('MYSQLUSER')
-        self.password = os.getenv('MYSQLPASSWORD')
-        self.database = os.getenv('MYSQLDATABASE')
-        self.port = os.getenv('MYSQLPORT')
-        self.token = os.getenv('TOKEN')
+        self.host = senhas[choice_db]['host']
+        self.user = senhas[choice_db]['user']
+        self.password = senhas[choice_db]['password']
+        self.database = senhas[choice_db]['database']
+        self.port = senhas[choice_db]['port']
+        self.token = senhas[choice_db]['token']
         self.connection = None
 
     def __enter__(self):
