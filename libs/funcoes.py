@@ -6,22 +6,24 @@ import numpy as np
 
 def get_datas(usina,data_init, data_end):
     ''' Retorna os valores de um período '''
-
     try:
         query = f'SELECT * FROM {usina} WHERE data_hora BETWEEN "{data_init}" AND "{data_end}"'
-        print('##'*10, usina, '##'*10)
-        print(query)
-        print('##' * 20,'##' * 10)
-        with Database() as db:                    # criar uma conexão com o banco de dados
-            #  Faz a busca dos dados
-            dados = db.fetch_all(query)
-
-            # se não houver valores, retorna os últimos 20000 valores
-            if dados.shape[0] == 0:
-                query = f'SELECT * FROM {usina} ORDER BY id DESC LIMIT 200'   # query para retornar os valores da tabela
+        with Database() as db:                       # criar uma conexão com o banco de dados
+            dados = db.fetch_all(query)              #  Faz a busca dos dados
+            if dados.shape[0] == 0:                  # se não houver valores, retorna os últimos 20000 valores
+                query = f'SELECT * FROM {usina} ORDER BY id DESC LIMIT 2000'    # query para retornar os valores da tabela
                 return db.fetch_all(query)                                      # retorna os valores da tabela
+            return dados                             # retorna os valores da tabela
 
-            return dados          # retorna os valores da tabela
+    except Exception as e:
+        raise Exception(f'Erro ao buscar os dados: {e}')
+
+def get_total(usina):
+    ''' Retorna os valores de um período '''
+    try:
+        query = f'SELECT data_hora, acumulador_energia FROM {usina}'
+        with Database() as db:                       # criar uma conexão com o banco de dados
+            return db.fetch_all(query)                                      # retorna os valores da tabela
 
     except Exception as e:
         raise Exception(f'Erro ao buscar os dados: {e}')

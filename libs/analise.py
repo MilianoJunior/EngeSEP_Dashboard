@@ -28,14 +28,6 @@ from libs.database import Database
 import streamlit as st
 
 
-# print('##################' * 5)
-# # declaracao de variaveis globais
-# gpus = tf.config.experimental.list_physical_devices('GPU')
-# data_hoje = time.strftime('%Y-%m-%d')
-# path_data = os.path.join(os.getcwd(), 'data')
-# name_plant = 'cgh_aparecida'
-# print("Num GPUs Available: ", gpus)
-
 def time_decorator(func):
     ''' Decorator para calcular o tempo de execução de uma função '''
 

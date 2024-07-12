@@ -34,6 +34,9 @@ def page_principal():
 
     # inserir o título
     # titulo('CGH Aparecida', 'Página principal')
+    # st.write('CGH APARECIDA')
+    st.markdown(''':blue[CGH APARECIDA] ''')
+
 
     # ranking
     ranking_component()
