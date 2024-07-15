@@ -14,6 +14,8 @@ import numpy as np
 import base64
 # from sklearn.model_selection import train_test_split
 from libs.api import gemini
+import threading
+import time
 def titulo(label, description, color_name="gray-70"):
     ''' Componente 01 -  Cria um título com descrição '''
 
@@ -196,13 +198,6 @@ def energia_component(usina, dados, period, start_date, end_date):
         margin=dict(l=20, r=20, t=20, b=20)  # Ajuste de margens
     )
 
-    # st.markdown("""
-    #     <style>
-    #     .stPlotlyChart {
-    #         padding: 1px;  /* Ajuste de padding */
-    #     }
-    #     </style>
-    # """, unsafe_allow_html=True)
     first_column = st.columns(1)
     columns = st.columns(1)
 
@@ -247,10 +242,11 @@ def card_component(usina):
     meses_pt_br = {1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho", 7: "julho", 8: "agosto",
                    9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"}
 
+
     with st.container():
         metric_data = [
             {
-                "label": f"Energia Gerada em {meses_pt_br[index.month]}",
+                "label": f"Energia Gerada em {meses_pt_br[index.month]}".upper(),
                 "value": f"{row['acumulador_energia_p']} MW",
                 "delta": "10%",  # Exemplo de delta, ajuste conforme necessário
                 "delta_color": "normal",  # Pode ser 'inverse', 'normal', ou 'off'
@@ -265,38 +261,50 @@ def card_component(usina):
             "border_left_color": "#9A1801",  # Cor da borda esquerda
             "box_shadow": "0 4px 6px rgba(0,0,0,0.1)",  # Sombra do cartão
         }
-        st.metric(label='Energia Total Gerada', value=f'{total} MW', delta='10%', delta_color='normal')
+        st.metric(label='Energia Total Gerada', value=f'{round(total,2)} MWh/mês',delta_color='normal')
 
-        for i, (index, row) in enumerate(df_mes.iterrows()):
-            mes_numero = index.month
-            mes_texto = meses_pt_br[mes_numero]
-            producao = row['acumulador_energia_p']
-            st.metric(label=f'Energia Gerada em {mes_texto}', value=f'{producao} MW', delta='10%', delta_color='normal')
+        anterior = 0
+        # invertendo a ordem para mostrar do mês mais recente para o mais antigo
+        df_mes = df_mes[::-1]
+
+        # cacular o delta e inserir no dataframe (atual/ anterior) * 100
+
+        for i, index in enumerate(df_mes.index):
+            print(i, index)
+            # mes_numero = index.month
+            # mes_texto = meses_pt_br[mes_numero]
+            # producao = row
+            # delta = 0
+            # # delta = round(row['delta'],2) if row['delta'] != np.inf else 0
+            # # delta = round(anterior/(producao - anterior), 2)
+            # print(f'{mes_texto} - {producao} - {anterior} - {delta}')
+            # st.metric(label=f'{mes_texto.upper()}', value=f'{round(producao,2)} MW', delta=f'{delta}%', delta_color='normal')
+            # anterior = producao
 
         style_metric_cards(**metric_card_settings)
-
-
-    # with st.container():
-    #
-    #     # criar um card metric para a energia total gerada
-    #     st.metric(label='Energia Total Gerada', value=f'{total} MW', delta='10%', delta_color='normal')
-    #
-    #     # criar um card metric para a energia de cada mês
-    #     for i, (index, row) in enumerate(df_mes.iterrows()):
-    #         mes_numero = index.month
-    #         mes_texto = meses_pt_br[mes_numero]
-    #         producao = row['acumulador_energia_p']
-    #         st.metric(label=f'Energia Gerada em {mes_texto}', value=f'{producao} MW', delta='10%', delta_color='normal')
-
 
 def get_image_base64(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode('utf-8')
 
+
+def get_image_base64(image_path):
+    import base64
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode('utf-8')
+
+
+def IA(prompt):
+    # Função de exemplo para gerar resposta do chatbot (simulação)
+    # Substitua pelo seu modelo real de IA
+    time.sleep(2)  # Simular tempo de resposta da IA
+    return f"Resposta para: {prompt}"
+
+
 def chatbot_component(df):
     ''' Componente 09 - Chatbot personalizado '''
     st.write("IA - Hawking")
-    messages = st.empty()
+    messages_placeholder = st.empty()
 
     # Obtém o caminho absoluto para o diretório do script Python
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -310,44 +318,102 @@ def chatbot_component(df):
     if "chatbot_messages" not in st.session_state:
         st.session_state.chatbot_messages = []
 
+    def update_messages():
+        with messages_placeholder.container():
+            for i, message in enumerate(st.session_state.chatbot_messages):
+                st.markdown(f"""
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
+                        <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
+                            <b>Usuário</b>: {message}
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
     # Adicionar mensagem inicial do hawkings
     if len(st.session_state.chatbot_messages) == 0:
-
         prompt_init = '''De acordo com as informações abaixo, Quanto de energia foi gerada hoje e no total? /n'''
-
         if not df.empty:
             colunas = list(df.columns)
             for i, row in df.iterrows():
-                prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]],2)} {colunas[1]}: {round(row[colunas[1]],2)}  {colunas[2]}: {round(row[colunas[2]],2)} /n'''
+                prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]], 2)} {colunas[1]}: {round(row[colunas[1]], 2)}  {colunas[2]}: {round(row[colunas[2]], 2)} /n'''
 
-        # print(prompt_init)
+        def initial_response():
+            resp = IA(prompt_init)
+            st.session_state.chatbot_messages.append(resp)
+            update_messages()
 
-        resp = gemini(prompt_init)
-        # resp = 'Olá, tudo bem? Como posso te ajudar?'
+        thread = threading.Thread(target=initial_response)
+        thread.start()
 
-        message = resp
-
-        st.session_state.chatbot_messages.append(message)
-        messages.markdown(f"""
-                        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                            <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
-                            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
-                                <b>Usuário</b>: {message}
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+    update_messages()
 
     if prompt := st.text_input("Digite uma mensagem..."):
         st.session_state.chatbot_messages.append(prompt)
-        for i, message in enumerate(st.session_state.chatbot_messages):
-            messages.markdown(f"""
-                <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                    <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
-                    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
-                        <b>Usuário</b>: {message}
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+
+        def generate_response():
+            response = IA(prompt)
+            st.session_state.chatbot_messages.append(response)
+            update_messages()
+
+        thread = threading.Thread(target=generate_response)
+        thread.start()
+
+# def chatbot_component(df):
+#     ''' Componente 09 - Chatbot personalizado '''
+#     st.write("IA - Hawking")
+#     messages = st.empty()
+#
+#     # Obtém o caminho absoluto para o diretório do script Python
+#     dir_path = os.path.dirname(os.path.realpath(__file__))
+#
+#     # Cria o caminho absoluto para a imagem
+#     image_path = os.path.join(dir_path, "img.webp")
+#
+#     # Obtém a imagem em base64
+#     image_base64 = get_image_base64(image_path)
+#
+#     if "chatbot_messages" not in st.session_state:
+#         st.session_state.chatbot_messages = []
+#
+#     # Adicionar mensagem inicial do hawkings
+#     if len(st.session_state.chatbot_messages) == 0:
+#
+#         prompt_init = '''De acordo com as informações abaixo, Quanto de energia foi gerada hoje e no total? /n'''
+#
+#         if not df.empty:
+#             colunas = list(df.columns)
+#             for i, row in df.iterrows():
+#                 prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]],2)} {colunas[1]}: {round(row[colunas[1]],2)}  {colunas[2]}: {round(row[colunas[2]],2)} /n'''
+#
+#         # print(prompt_init)
+#
+#         resp = IA(prompt_init)
+#         # resp = 'Olá, tudo bem? Como posso te ajudar?'
+#
+#         message = resp
+#
+#         st.session_state.chatbot_messages.append(message)
+#         messages.markdown(f"""
+#                         <div style="display: flex; align-items: center; margin-bottom: 20px;">
+#                             <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
+#                             <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
+#                                 <b>Usuário</b>: {message}
+#                             </div>
+#                         </div>
+#                     """, unsafe_allow_html=True)
+#
+#     if prompt := st.text_input("Digite uma mensagem..."):
+#         st.session_state.chatbot_messages.append(prompt)
+#         for i, message in enumerate(st.session_state.chatbot_messages):
+#             messages.markdown(f"""
+#                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
+#                     <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
+#                     <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
+#                         <b>Usuário</b>: {message}
+#                     </div>
+#                 </div>
+#             """, unsafe_allow_html=True)
 
 def statistics_component(data_df):
     ''' Componente 10 - Estatísticas '''

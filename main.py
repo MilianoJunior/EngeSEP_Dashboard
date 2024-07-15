@@ -24,6 +24,7 @@ import pandas as pd
 import numpy as np
 import os
 import re
+import pytz
 
 
 cont = 0
@@ -35,7 +36,9 @@ def page_principal():
     # inserir o título
     # titulo('CGH Aparecida', 'Página principal')
     # st.write('CGH APARECIDA')
-    data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+    # ajustar o horário para pt-br
+
+    data_hora = datetime.now(tz=pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
     st.markdown(''':blue[CGH APARECIDA] - Última atualização: {}'''.format(data_hora))
 
 
