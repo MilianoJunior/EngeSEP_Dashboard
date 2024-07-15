@@ -322,8 +322,8 @@ def chatbot_component(df):
 
         # print(prompt_init)
 
-        # resp = gemini(prompt_init)
-        resp = 'Olá, tudo bem? Como posso te ajudar?'
+        resp = gemini(prompt_init)
+        # resp = 'Olá, tudo bem? Como posso te ajudar?'
 
         message = resp
 
