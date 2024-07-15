@@ -8,6 +8,7 @@ import random
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 import plotly.express as px
+from streamlit_extras.metric_cards import style_metric_cards
 import os
 import numpy as np
 import base64
@@ -185,7 +186,7 @@ def energia_component(usina, dados, period, start_date, end_date):
 
     fig = go.Figure()
     fig.add_trace(
-        go.Pie(values=[total], hole=0.9, marker=dict(colors=["#000000"]), showlegend=False,
+        go.Pie(values=[total], hole=0.8, marker=dict(colors=["#000000"]), showlegend=False,
                textinfo='none'))
     fig.update_layout(
         annotations=[dict(text=f'{total} MW <br> Total', x=0.5, y=0.5, font_size=11, showarrow=False,
@@ -220,7 +221,7 @@ def energia_component(usina, dados, period, start_date, end_date):
 
             fig = go.Figure()
             fig.add_trace(
-                go.Pie(values=[producao], hole=0.9, marker=dict(colors=[colors[i % len(colors)]]), showlegend=False,
+                go.Pie(values=[producao], hole=0.8, marker=dict(colors=[colors[i % len(colors)]]), showlegend=False,
                        textinfo='none'))
             fig.update_layout(
                 annotations=[dict(text=f'{producao} MW <br> {mes_texto}', x=0.5, y=0.5, font_size=11, showarrow=False,
@@ -232,62 +233,60 @@ def energia_component(usina, dados, period, start_date, end_date):
             with columns[0]:
                 st.plotly_chart(fig, use_container_width=True)
 
-            # if cont % 2 == 0:
-            #     with columns[cont-1]:
-            #         st.plotly_chart(fig, use_container_width=True)
-            # else:
-            #     with columns[cont]:
-            #         st.plotly_chart(fig, use_container_width=True)
-
             cont += 1
+def card_component(usina):
+    ''' Componente 09 - Card '''
 
-# Exemplo de uso da função
-# Substitua pelas suas funções reais e chame a função com os parâmetros corretos
-# energia_component(usina, dados, period, start_date, end_date)
+    # consulta a energia total gerada
+    df = get_total(usina)
 
-    # # Dicionário mapeando número do mês para abreviação em português
-    # meses_pt_br = {
-    #     1: 'janeiro', 2: 'fevereiro', 3: 'março', 4: 'abril',
-    #     5: 'maio', 6: 'junho', 7: 'julho', 8: 'agosto',
-    #     9: 'setembro', 10: 'outubro', 11: 'novembro', 12: 'dezembro'
-    # }
+    total = float(df['acumulador_energia'].values[-1])
+
+    # calcular a energia produzida no período mensal para o df
+    df_mes = calculate_production(df, 'acumulador_energia', 'ME')
+    meses_pt_br = {1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+                   9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"}
+
+    with st.container():
+        metric_data = [
+            {
+                "label": f"Energia Gerada em {meses_pt_br[index.month]}",
+                "value": f"{row['acumulador_energia_p']} MW",
+                "delta": "10%",  # Exemplo de delta, ajuste conforme necessário
+                "delta_color": "normal",  # Pode ser 'inverse', 'normal', ou 'off'
+            }
+            for i, (index, row) in enumerate(df_mes.iterrows())
+        ]
+
+        metric_card_settings = {
+            "border_size_px": 1,  # Cor do delta positivo
+            "border_color": "#CCC",  # Cor do delta negativo
+            "border_radius_px": 10,  # Raio da borda do cartão
+            "border_left_color": "#9A1801",  # Cor da borda esquerda
+            "box_shadow": "0 4px 6px rgba(0,0,0,0.1)",  # Sombra do cartão
+        }
+        st.metric(label='Energia Total Gerada', value=f'{total} MW', delta='10%', delta_color='normal')
+
+        for i, (index, row) in enumerate(df_mes.iterrows()):
+            mes_numero = index.month
+            mes_texto = meses_pt_br[mes_numero]
+            producao = row['acumulador_energia_p']
+            st.metric(label=f'Energia Gerada em {mes_texto}', value=f'{producao} MW', delta='10%', delta_color='normal')
+
+        style_metric_cards(**metric_card_settings)
+
+
+    # with st.container():
     #
-    # cont = 0
-    # columns = st.columns(len(df_mes))
-    # for i, row in df_mes.iterrows():
-    #     print(f'{i}  {row["acumulador_energia_p"]}')
-    #     mes_numero = i.month
-    #     mes_texto = meses_pt_br[mes_numero]
-    #     producao = row['acumulador_energia_p']
-    #     if cont % 2 == 0:
-    #         with columns[cont-1]:
-    #             fig = go.Figure()
-    #             fig.add_trace(go.Pie(values=[producao], hole=0.9))
-    #             fig.update_layout(
-    #                 annotations=[dict(text=f'{producao} MW <br> {mes_texto}', x=0.5, y=0.5, font_size=11, showarrow=False, font=dict(color='black'))],
-    #                 width=300,
-    #                 height=300
-    #             )
-    #             st.plotly_chart(fig, use_container_width=True)
-    #     else:
-    #         with columns[cont]:
-    #             fig = go.Figure()
-    #             fig.add_trace(go.Pie(values=[producao], hole=0.9))
-    #             fig.update_layout(
-    #                 annotations=[dict(text=f'{producao} MW <br> {mes_texto}', x=0.5, y=0.5, font_size=11, showarrow=False, font=dict(color='black'))],
-    #                 width=300,
-    #                 height=300
-    #             )
-    #             st.plotly_chart(fig, use_container_width=True)
-    #     cont += 1
-        # fig = go.Figure()
-        # fig.add_trace(go.Pie(values=[producao], hole=0.9))
-        # fig.update_layout(
-        #     annotations=[dict(text=f'{producao} MW <br> {mes_texto}', x=0.5, y=0.5, font_size=11, showarrow=False, font=dict(color='black'))],
-        #     width=300,
-        #     height=300
-        # )
-        # st.plotly_chart(fig, use_container_width=True)
+    #     # criar um card metric para a energia total gerada
+    #     st.metric(label='Energia Total Gerada', value=f'{total} MW', delta='10%', delta_color='normal')
+    #
+    #     # criar um card metric para a energia de cada mês
+    #     for i, (index, row) in enumerate(df_mes.iterrows()):
+    #         mes_numero = index.month
+    #         mes_texto = meses_pt_br[mes_numero]
+    #         producao = row['acumulador_energia_p']
+    #         st.metric(label=f'Energia Gerada em {mes_texto}', value=f'{producao} MW', delta='10%', delta_color='normal')
 
 
 def get_image_base64(image_path):
@@ -390,6 +389,8 @@ def ranking_component(dados=None):
 
     usina = 'cgh_aparecida'
 
+    print('usina', usina)
+
     with col1:
         period, start_date, end_date = select_date()
     # leitura dos dados se for None
@@ -425,8 +426,8 @@ def ranking_component(dados=None):
         energia_bar_component(df_energia, period, start_date, end_date)
 
     with col3:
-        energia_component(usina, df_energia, period, start_date, end_date)
-
+        # energia_component(usina, df_energia, period, start_date, end_date)
+        card_component(usina)
         # statistics_component(df)
 
 

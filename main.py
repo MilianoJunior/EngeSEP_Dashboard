@@ -35,7 +35,8 @@ def page_principal():
     # inserir o título
     # titulo('CGH Aparecida', 'Página principal')
     # st.write('CGH APARECIDA')
-    st.markdown(''':blue[CGH APARECIDA] ''')
+    data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+    st.markdown(''':blue[CGH APARECIDA] - Última atualização: {}'''.format(data_hora))
 
 
     # ranking
@@ -81,11 +82,11 @@ def pages():
     with st.sidebar:
 
         # criação do menu
-        menu = on_hover_tabs(tabName=['Dashboard','Unidades','Configurações'],
+        menu = on_hover_tabs(tabName=['CGH Aparecida','Unidades','Configurações'],
                              iconName=['dashboard','power','settings'], default_choice=0)
 
     # Página principal
-    if menu == 'Dashboard':
+    if menu == 'CGH Aparecida':
 
         # instanciar a página principal
         page_principal()
@@ -122,7 +123,7 @@ def main():
             }
             .st-emotion-cache-1jicfl2{
                 width: 100%;
-                padding: 0rem 1rem 1rem;
+                padding: 0rem 0.1rem 0.1rem;
                 min-width: auto;
                 max-width: initial;
             }
