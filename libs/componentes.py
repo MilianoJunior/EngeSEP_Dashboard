@@ -103,8 +103,8 @@ def card_component(df_mes, total):
                     border-radius: {metric_card_settings['border_radius_px']}px; 
                     box-shadow: {metric_card_settings['box_shadow']}; 
                     padding: 10px; margin-bottom: 10px;">
-            <p style="font-size: 20px; margin: 0;">Energia Total Gerada</p>
-            <p style="font-size: 16px; margin: 0;">{round(total, 2)} MWh/mês</p>
+            <p style="font-size: 28px; margin: 0;">Energia Total Gerada</p>
+            <p style="font-size: 24px; margin: 0;">{round(total, 2)}<span style="font-size: 16px; color: blue;"> MWh/mês</span></p>
         </div>
         ''', unsafe_allow_html=True)
 
@@ -127,9 +127,9 @@ def card_component(df_mes, total):
                         border-radius: {metric_card_settings['border_radius_px']}px; 
                         box-shadow: {metric_card_settings['box_shadow']}; 
                         padding: 10px; margin-bottom: 10px;">
-                <p style="font-size: 20px; margin: 0;">{mes_texto.upper()}</p>
-                <p style="font-size: 16px; margin: 0;">{round(producao, 2)} MWh/mês</p>
-                <p style="font-size: 12px; margin: 0; color: {delta_color};">{delta_sign}{delta}%</p>
+                <p style="font-size: 26px; margin: 0;">{mes_texto.upper()}</p>
+                <p style="font-size: 20px; margin: 0;">{round(producao, 2)}<span style="font-size: 12px; color: blue;"> MWh/mês</span></p>
+                <p style="font-size: 14px; margin: 0; color: {delta_color};">{delta_sign}{delta}%</p>
             </div>
             ''', unsafe_allow_html=True)
 # @timeit
