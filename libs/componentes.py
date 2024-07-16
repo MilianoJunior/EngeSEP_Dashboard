@@ -255,8 +255,8 @@ def ranking_component(dados=None):
         chatbot_component(dfs['df_merge'])
 
     with col2:
-        niveis_component(dfs['df_nivel'], start_date, end_date)
         energia_bar_component(dfs['df_energia'], period_name, start_date, end_date)
+        niveis_component(dfs['df_nivel'], start_date, end_date)
 
     with col3:
         card_component(dfs['df_mes'], dfs['total'])
