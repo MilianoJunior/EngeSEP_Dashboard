@@ -11,6 +11,7 @@
     3 passo: Configurar o servidor da railway para rodar o projeto. -> OK
 '''
 from streamlit_extras.metric_cards import style_metric_cards
+import streamlit.components.v1 as components
 from st_on_hover_tabs import on_hover_tabs
 from libs.componentes import (titulo, ranking_component)
 from libs.funcoes import (get_datas, get_tables)
@@ -28,6 +29,7 @@ import pytz
 
 
 cont = 0
+
 load_dotenv()
 
 def page_principal():
@@ -37,6 +39,15 @@ def page_principal():
     # titulo('CGH Aparecida', 'Página principal')
     # st.write('CGH APARECIDA')
     # ajustar o horário para pt-br
+
+    # Chamada para obter o tamanho da tela
+    # screen_size = get_screen_size()
+    #
+    # if screen_size:
+    #     print(screen_size)
+    #     # print(f"Tamanho da tela: {screen_size['width']} x {screen_size['height']}")
+    # else:
+    #     print("Não foi possível obter o tamanho da tela.", screen_size)
     print(' ')
     print('                  ## Ranking ##')
 
@@ -135,7 +146,7 @@ def main():
                     width: 100%;
                     height: 100%;
                     position: relative;
-                    top: 30px;
+                    top: 20px;
                     right: 1px;
                 }
         </style>

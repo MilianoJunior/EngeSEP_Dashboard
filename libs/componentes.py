@@ -1,13 +1,15 @@
 import pandas as pd
 from streamlit_extras.colored_header import colored_header
 from streamlit_timeline import timeline
-from libs.funcoes import (get_datas, get_total, calculos, get_ranking, get_niveis, resample_data, get_energia, calculate_production)
+from libs.funcoes import (get_datas, get_total, calculos, get_weather, get_ranking, get_niveis, resample_data, get_energia, calculate_production)
 import streamlit as st
 import random
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 import plotly.express as px
 from streamlit_extras.metric_cards import style_metric_cards
+import streamlit.components.v1 as components
+# from streamlit_autorefresh import st_autorefresh
 import os
 import numpy as np
 import base64
@@ -16,6 +18,8 @@ import threading
 import time
 import asyncio
 from queue import Queue
+import requests
+from bs4 import BeautifulSoup
 
 cont = 0
 # decorador para tempo de execução
@@ -37,19 +41,111 @@ def timeit(method):
         return result
     return timed
 
+def get_weather_from_google(city):
+    url = f"https://ciram.epagri.sc.gov.br/index.php/2024/07/16/previsao-5-dias/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # print(soup)
+
+    weather = {}
+
+    # try:
+    tags = {
+        # 'location': '#post-1995 > div > p:nth-child(1) > strong',
+        'time': '#post-1995 > div > p:nth-child(2) > strong',
+        'status': '#post-1995 > div > p:nth-child(3) > strong',
+        # 'temp': '#post-1995 > div > p:nth-child(4) > strong',
+        # 'precipitation': '#post-1995 > div > p:nth-child(5) > strong',
+    }
+    # #post-1995 > div > p:nth-child(3)
+    image_path = os.path.join(os.getcwd(), 'data', 'icon_chuva.png')
+
+    weather['icon'] = get_image_base64(image_path)
+    for key, value in tags.items():
+        try:
+            tema = soup.select_one(value)
+            values = value.replace(' > strong', '')
+            weather[tema] = soup.select_one(values).text
+            print(key, value, weather[tema])
+        except Exception as e:
+            weather[key] = None
+            print(e)
+
+        # weather['location'] = soup.select_one('div#wob_loc').text
+        # weather['time'] = soup.select_one('div#wob_dts').text
+        # weather['status'] = soup.select_one('span#wob_dc').text
+        # weather['temp'] = soup.select_one('span#wob_tm').text
+        # weather['precipitation'] = soup.select_one('span#wob_pp').text
+        # weather['humidity'] = soup.select_one('span#wob_hm').text
+        # weather['wind'] = soup.select_one('span#wob_ws').text
+        # weather['icon'] = soup.select_one('img#wob_tci')['src']
+    # except AttributeError:
+    #     return None
+
+    # print(weather)
+
+    return weather
+
+
+# Função para exibir o componente de previsão do tempo no Streamlit
+def weather_component(city):
+    weather = get_weather_from_google(city)
+
+    if weather:
+        # st.markdown(f"##### Previsão do Tempo para Chapecó")
+        texto = ''
+        for key, value in weather.items():
+            if key == 'icon':
+                continue
+            texto += f'<p style="margin: 0; font-size: 12px; font-weight: bold;">{value}</p>'
+
+        # Exibir o componente com a previsão do tempo
+        st.markdown(
+            f"""
+                       <div style="display: flex; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 10px; background-color: #2c2f33; color: #ffffff;">
+                           <img src="data:image/png;base64,{weather['icon']}" style="width: 80px; height: 80px;" alt="Icone Chuva"/>
+                           <div style="margin-left: 20px;">
+                               {texto}
+                           </div>
+                       </div>
+                   """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.error("Não foi possível obter a previsão do tempo.")
+
 @timeit
 def titulo(label, description, color_name="gray-70"):
     ''' Componente 01 -  Cria um título com descrição '''
     return colored_header(label=label,description='', color_name=color_name)
+
+def get_datas():
+    ''' Função para obter os dados das usinas '''
+    periodo = {'2 min': '2min', '30 min': '30min', 'Hora': 'h', 'Diário': 'd', 'Semanal': 'w', 'Mensal': 'm',
+               'Anual': 'YE'}
+    period_name = 'Diário'
+    data_inicial = (pd.to_datetime('today') - pd.Timedelta(days=30)).strftime('%d-%m-%Y %H:%M:%S')
+    data_end = (pd.to_datetime('today') + pd.Timedelta(days=1)).strftime('%d-%m-%Y %H:%M:%S')
+
+    st.session_state['period'] = periodo.get(period_name, 'h')
+    st.session_state['period_name'] = period_name
+    st.session_state['start_date'] = pd.to_datetime(data_inicial, dayfirst=True)
+    st.session_state['end_date'] = pd.to_datetime(data_end, dayfirst=True)
+
+
 @timeit
 def select_date():
     ''' Componente 06 - Seleção de datas '''
-    col1, col2, col3 = st.columns([2.0, 2.0, 2.0])
+    col1, col2, col3, col4 = st.columns([2.0, 2.0, 2.0, 2.0])
 
     with col1:
         periodo = {'2 min': '2min', '30 min': '30min','Hora': 'h', 'Diário': 'd', 'Semanal': 'w', 'Mensal': 'm', 'Anual': 'YE'}
         period_name = st.selectbox(
-            'Selecione o período',
+            'Período',
             ('2 min', '30 min', 'Hora', 'Diário', 'Semanal', 'Mensal', 'Anual'),  # Opções para o seletor
             index=3  # Índice da opção padrão
         )
@@ -63,7 +159,16 @@ def select_date():
         data_end = (pd.to_datetime('today') + pd.Timedelta(days=1)).strftime('%d-%m-%Y %H:%M:%S')
         end_date = st.date_input('Data Final', value=pd.to_datetime(data_end, dayfirst=True), format="DD-MM-YYYY")
 
-    return period, period_name, start_date, end_date
+    with col4:
+        if st.button("Atualizar"):
+            st.session_state['period'] = period
+            st.session_state['period_name'] = period_name
+            st.session_state['start_date'] = start_date
+            st.session_state['end_date'] = end_date
+            st.cache_data.clear()
+            st.rerun()
+
+    # return period, period_name, start_date, end_date
 @timeit
 def niveis_component(dados, start_date, end_date):
     ''' Componente 07 - Níveis jusante e montante '''
@@ -132,53 +237,15 @@ def card_component(df_mes, total):
                 <p style="font-size: 14px; margin: 0; color: {delta_color};">{delta_sign}{delta}%</p>
             </div>
             ''', unsafe_allow_html=True)
-# @timeit
-# def card_component(df_mes, total):
-#     ''' Componente 09 - Card '''
-#     meses_pt_br = {1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho", 7: "julho", 8: "agosto",
-#                    9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"}
-#
-#     with st.container():
-#         metric_card_settings = {
-#             "border_size_px": 1,  # Cor do delta positivo
-#             "border_color": "#CCC",  # Cor do delta negativo
-#             "border_radius_px": 10,  # Raio da borda do cartão
-#             "border_left_color": "#4169E1",  # Cor da borda esquerda
-#             "box_shadow": "0 4px 6px rgba(0,0,0,0.1)",  # Sombra do cartão
-#         }
-#         st.metric(label='Energia Total Gerada', value=f'{round(total,2)} MWh/mês',delta_color='normal')
-#         anterior = 0
-#         df_mes = df_mes[::-1]
-#         for i, index in enumerate(df_mes.index):
-#             mes_numero = index.month
-#             mes_texto = meses_pt_br[mes_numero]
-#             producao = df_mes.values[i][0]
-#             if i == len(df_mes) - 1:
-#                 delta = 0
-#             else:
-#                 delta = round((producao-df_mes.values[i+1][0]) / df_mes.values[i+1][0], 2)
-#             st.metric(label=f'{mes_texto.upper()}', value=f'{round(producao,2)} MWh/mês', delta=f'{delta}%', delta_color='normal')
-#
-#         style_metric_cards(**metric_card_settings)
 
-@timeit
+        city = "Chapeco"
+        weather_component(city)
+
+@st.cache_data
 def get_image_base64(image_path):
     import base64
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode('utf-8')
-
-@timeit
-async def IA(prompt):
-    await asyncio.sleep(2)  # Simular tempo de resposta da IA
-    return f"Resposta para: {prompt}"
-
-@timeit
-@st.cache_data
-def cached_response(prompt):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    response = loop.run_until_complete(IA(prompt))
-    return response
 
 @timeit
 def chatbot_component(df):
@@ -240,23 +307,32 @@ def energia_bar_component(dados, period_name, start_date, end_date):
                         yaxis_title='Energia (MWh)')
     st.plotly_chart(fig, use_container_width=True)  # Faz o gráfico ter a mesma altura que a col1
 
+@st.cache_data
+def get_dados():
+    usina = 'cgh_aparecida'
+    dfs = calculos(usina, st.session_state['period'], st.session_state['start_date'], st.session_state['end_date'])
+    return dfs
 @timeit
 def ranking_component(dados=None):
     ''' Componente 05 - Ranking '''
-    col1, col2, col3 = st.columns([3.3, 4.4, 2.3], gap='small')  # Ajusta o tamanho das colunas
+    # count = st_autorefresh(interval=60000, limit=100, key="fizzbuzzcounter")
+    col1, col2, col3 = st.columns([3.3, 4.7, 2.0], gap='medium')  # Ajusta o tamanho das colunas
     usina = 'cgh_aparecida'
-
     with col1:
-        period, period_name, start_date, end_date = select_date()
+        if 'period' not in st.session_state:
+            get_datas()
 
-        dfs = calculos(usina, period, start_date, end_date)
+        dfs = get_dados()
+        with st.container(height=500):
+            chatbot_component(dfs['df_merge'])
 
-        st.dataframe(dfs['df_merge'])
-        chatbot_component(dfs['df_merge'])
+        with st.container(height=400):
+            select_date()
+            st.dataframe(dfs['df_merge'])
 
     with col2:
-        energia_bar_component(dfs['df_energia'], period_name, start_date, end_date)
-        niveis_component(dfs['df_nivel'], start_date, end_date)
+        energia_bar_component(dfs['df_energia'], st.session_state['period_name'], st.session_state['start_date'], st.session_state['end_date'])
+        niveis_component(dfs['df_nivel'], st.session_state['start_date'], st.session_state['end_date'])
 
     with col3:
         card_component(dfs['df_mes'], dfs['total'])
@@ -451,3 +527,100 @@ def ranking_component(dados=None):
 #                 st.plotly_chart(fig, use_container_width=True)
 #
 #             cont += 1
+# def relogio():
+#     clock_html = """
+#     <!DOCTYPE html>
+#     <html>
+#     <head>
+#         <style>
+#             .clock {
+#                 width: 200px;
+#                 height: 200px;
+#                 border: 10px solid #333;
+#                 border-radius: 50%;
+#                 position: relative;
+#                 margin: auto;
+#                 display: flex;
+#                 align-items: center;
+#                 justify-content: center;
+#             }
+#
+#             .hand {
+#                 width: 50%;
+#                 height: 6px;
+#                 background: #333;
+#                 position: absolute;
+#                 top: 50%;
+#                 transform-origin: 100%;
+#                 transform: translateY(-50%);
+#             }
+#
+#             .hour {
+#                 height: 8px;
+#             }
+#
+#             .minute {
+#                 height: 6px;
+#             }
+#
+#             .second {
+#                 height: 4px;
+#                 background: red;
+#             }
+#
+#             .number {
+#                 position: absolute;
+#                 font-size: 18px;
+#                 font-weight: bold;
+#                 text-align: center;
+#             }
+#
+#             .number1 { top: 10px; left: 50%; transform: translateX(-50%); }
+#             .number2 { top: 35px; left: 85px; transform: translateX(-50%); }
+#             .number3 { top: 90px; right: 10px; transform: translateY(-50%); }
+#             .number4 { bottom: 35px; right: 35px; transform: translateX(-50%); }
+#             .number5 { bottom: 10px; left: 50%; transform: translateX(-50%); }
+#             .number6 { bottom: 35px; left: 35px; transform: translateX(-50%); }
+#             .number7 { bottom: 90px; left: 10px; transform: translateY(-50%); }
+#             .number8 { top: 35px; left: 15px; transform: translateX(-50%); }
+#         </style>
+#     </head>
+#     <body>
+#         <div class="clock">
+#             <div class="hand hour" id="hour"></div>
+#             <div class="hand minute" id="minute"></div>
+#             <div class="hand second" id="second"></div>
+#             <div class="number number1">12</div>
+#             <div class="number number2">1</div>
+#             <div class="number number3">3</div>
+#             <div class="number number4">5</div>
+#             <div class="number number5">6</div>
+#             <div class="number number6">7</div>
+#             <div class="number number7">9</div>
+#             <div class="number number8">11</div>
+#         </div>
+#         <script>
+#             function updateClock() {
+#                 const now = new Date();
+#                 const seconds = now.getSeconds();
+#                 const minutes = now.getMinutes();
+#                 const hours = now.getHours();
+#
+#                 const secondDegrees = ((seconds / 60) * 360) + 90;
+#                 const minuteDegrees = ((minutes / 60) * 360) + ((seconds/60)*6) + 90;
+#                 const hourDegrees = ((hours / 12) * 360) + ((minutes/60)*30) + 90;
+#
+#                 document.getElementById('second').style.transform = `rotate(${secondDegrees}deg)`;
+#                 document.getElementById('minute').style.transform = `rotate(${minuteDegrees}deg)`;
+#                 document.getElementById('hour').style.transform = `rotate(${hourDegrees}deg)`;
+#             }
+#
+#             setInterval(updateClock, 1000);
+#             updateClock(); // Inicializar o relógio na carga
+#         </script>
+#     </body>
+#     </html>
+#     """
+#
+#     # Use o Streamlit para exibir o relógio em um contêiner
+#     st.components.v1.html(clock_html, height=300, width=300)

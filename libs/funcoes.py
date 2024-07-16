@@ -3,6 +3,12 @@ from libs.database import Database
 import pandas as pd
 import time
 import numpy as np
+from dotenv import load_dotenv
+import requests
+import os
+load_dotenv()
+
+
 
 def get_datas(usina,data_init, data_end):
     ''' Retorna os valores de um período '''
@@ -211,6 +217,26 @@ def calculos(usina, period, start_date, end_date):
     }
 
     return dfs
+
+# Função para obter a previsão do tempo
+def get_weather(city):
+    ''' Retorna o clima de uma cidade '''
+    API_KEY = os.getenv('APITEMPO')
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    print(response)
+    data = response.json()
+    if response.status_code == 200:
+        weather = {
+            'temperature': data['main']['temp'],
+            'description': data['weather'][0]['description'],
+            'icon': data['weather'][0]['icon'],
+            'humidity': data['main']['humidity'],
+            'wind_speed': data['wind']['speed'],
+        }
+        return weather
+    else:
+        return None
 
 
 def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):
