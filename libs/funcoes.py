@@ -21,7 +21,7 @@ def get_datas(usina,data_init, data_end):
 def get_total(usina):
     ''' Retorna os valores de um período '''
     try:
-        query = f'SELECT data_hora, acumulador_energia FROM {usina}'
+        query = f'SELECT data_hora, acumulador_energia, nivel_montante, nivel_jusante FROM {usina}'
         with Database() as db:                       # criar uma conexão com o banco de dados
             return db.fetch_all(query)                                      # retorna os valores da tabela
 
@@ -72,8 +72,8 @@ def resample_data(df, period):
     ''' Resample dos dados para o período desejado '''
 
     try:
-        df['data_hora'] = pd.to_datetime(df['data_hora'])  # converter a coluna data_hora para datetime
-        df.set_index('data_hora', inplace=True)            # setar a coluna data_hora como index
+        # df['data_hora'] = pd.to_datetime(df['data_hora'])  # converter a coluna data_hora para datetime
+        # df.set_index('data_hora', inplace=True)            # setar a coluna data_hora como index
         df_resampled = df.resample(period).mean()          # resample para o período desejado
         # df_resampled.columns = df_resampled.columns.droplevel()     # Limpa o DataFrame para remover níveis múltiplos nas colunas
 
@@ -108,9 +108,6 @@ def calculate_production(df, column, period):
     '''Calcula a produção de energia corrigida para o período especificado de maneira ajustada.'''
 
     try:
-
-        df['data_hora'] = pd.to_datetime(df['data_hora'])  # converter a coluna data_hora para datetime
-        df.set_index('data_hora', inplace=True)          # setar a coluna data_hora como index
 
         df[column] = df[column].astype(float)           # converter a column para float
         columnp = column + '_p'                         # cria uma nova coluna para a produção de energia
@@ -182,6 +179,38 @@ def get_max_nivel(usina):
 
         print(usina, ' o valor máximo: ',dados.max())
 
+def calculos(usina, period, start_date, end_date):
+    ''' Calcula a produção de energia para integrar ao dashboard '''
+    df = get_total(usina)
+    df['data_hora'] = pd.to_datetime(df['data_hora'])  # converter a coluna data_hora para datetime
+    df.set_index('data_hora', inplace=True)  # setar a coluna data_hora como index
+
+    df_nivel = df[['nivel_montante', 'nivel_jusante']]
+    df_energia = df[['acumulador_energia']]
+
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    df_nivel = df_nivel[(df_nivel.index >= start_date) & (df_nivel.index <= end_date)]
+    df_energia = df_energia[(df_energia.index >= start_date) & (df_energia.index <= end_date)]
+    df_nivel = resample_data(df_nivel, period)
+
+    df_energia = calculate_production(df_energia,'acumulador_energia', period)
+    df_merge = pd.merge(df_nivel, df_energia, on='data_hora', how='inner')
+    df_merge.rename(columns={'acumulador_energia_p': 'Energia Prod. (MW)', 'nivel_montante': 'Nível Montante (m)',
+                       'nivel_jusante': 'Nível Jusante (m)'}, inplace=True)
+    total = float(df['acumulador_energia'].values[-1])
+    df_mes = calculate_production(df, 'acumulador_energia', 'ME')
+
+    dfs = {
+        'df_merge': df_merge,
+        'df_nivel': df_nivel,
+        'df_energia': df_energia,
+        'df_mes': df_mes,
+        'total': total
+    }
+
+    return dfs
 
 
 def main_calculate(usina, period, start_date, end_date, potencia_max=2.5):

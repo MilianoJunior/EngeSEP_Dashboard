@@ -12,7 +12,7 @@
 '''
 from streamlit_extras.metric_cards import style_metric_cards
 from st_on_hover_tabs import on_hover_tabs
-from libs.componentes import (titulo, tabs, check_password, timeline_component, ranking_component) #, analise_dados)
+from libs.componentes import (titulo, ranking_component)
 from libs.funcoes import (get_datas, get_tables)
 # from libs.analise import executor
 import plotly.graph_objects as go
@@ -37,9 +37,11 @@ def page_principal():
     # titulo('CGH Aparecida', 'Página principal')
     # st.write('CGH APARECIDA')
     # ajustar o horário para pt-br
+    print(' ')
+    print('                  ## Ranking ##')
 
-    data_hora = datetime.now(tz=pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
-    st.markdown(''':blue[CGH APARECIDA] - Última atualização: {}'''.format(data_hora))
+    # data_hora = datetime.now(tz=pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
+    # st.markdown(''':blue[CGH APARECIDA] - Última atualização: {}'''.format(data_hora))
 
 
     # ranking
@@ -56,18 +58,7 @@ def page_principal():
 
 def page_usinas():
     """Retrieves key metrics from each usina table."""
-
-    # Consulta para obter as tabelas do banco de dados
-    tables = get_tables('usinas')
-
-    # criar uma lista com os nomes das usinas com a pagina principal
-    pages =  list(tables['nome'].values)
-
-    # remove ponte_serradastream
-    pages.remove('PCH Ponte Serrada')
-
-    # cria as abas com as usinas
-    tabs(pages)
+    titulo('Unidades', 'Página de Unidades')
 
 def page_config():
     ''' Página de configurações do dashboard '''
