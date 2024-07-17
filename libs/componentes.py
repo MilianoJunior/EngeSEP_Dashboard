@@ -42,51 +42,47 @@ def timeit(method):
     return timed
 
 def get_weather_from_google(city):
-    url = f"https://ciram.epagri.sc.gov.br/index.php/2024/07/16/previsao-5-dias/"
+    # criar variavel com a data de hoje
+    today = pd.to_datetime('today').strftime('%Y/%m/%d')
+    dia_literal = pd.to_datetime('today').strftime('%d/%m')
+
+    url = f"https://ciram.epagri.sc.gov.br/index.php/{today}/previsao-5-dias/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    # print(soup)
-
     weather = {}
 
-    # try:
-    tags = {
-        # 'location': '#post-1995 > div > p:nth-child(1) > strong',
-        'time': '#post-1995 > div > p:nth-child(2) > strong',
-        'status': '#post-1995 > div > p:nth-child(3) > strong',
-        # 'temp': '#post-1995 > div > p:nth-child(4) > strong',
-        # 'precipitation': '#post-1995 > div > p:nth-child(5) > strong',
-    }
-    # #post-1995 > div > p:nth-child(3)
-    image_path = os.path.join(os.getcwd(), 'data', 'icon_chuva.png')
-
-    weather['icon'] = get_image_base64(image_path)
-    for key, value in tags.items():
+    for item in range(1, 30):
         try:
-            tema = soup.select_one(value)
-            values = value.replace(' > strong', '')
-            weather[tema] = soup.select_one(values).text
-            print(key, value, weather[tema])
+            texto = soup.select_one(f'#post-1995 > div > p:nth-child({item})').text
+            if dia_literal in texto:
+                weather['data'] = texto
         except Exception as e:
-            weather[key] = None
             print(e)
 
-        # weather['location'] = soup.select_one('div#wob_loc').text
-        # weather['time'] = soup.select_one('div#wob_dts').text
-        # weather['status'] = soup.select_one('span#wob_dc').text
-        # weather['temp'] = soup.select_one('span#wob_tm').text
-        # weather['precipitation'] = soup.select_one('span#wob_pp').text
-        # weather['humidity'] = soup.select_one('span#wob_hm').text
-        # weather['wind'] = soup.select_one('span#wob_ws').text
-        # weather['icon'] = soup.select_one('img#wob_tci')['src']
-    # except AttributeError:
-    #     return None
+    icon_dict = {
+        "Nublado": "icons/cloud.png",
+        "Chuva": "icons/raining.png",
+        "Parcialmente nublado": "icons/cloudy.png",
+        "Trovoada": "icons/thunder.png",
+        "Sol": "icons/sun.png",
+        "Neve": "icons/snow.png",
+        "Guarda-chuva": "icons/umbrella.png",
+        "Gotas": "icons/droplets.png",
+        "Termômetro": "icons/thermometer.png",
+        "Furacão": "icons/hurricane.png",
+        "Onda": "icons/wave.png",
+        "Vento": "icons/wind.png",
+        "Lua": "icons/moon.png",
+        # Adicione outros ícones conforme necessário
+    }
 
-    # print(weather)
+    image_path = os.path.join(os.getcwd(), 'data','icons','cloudyDay.png')
+    weather['descricao'] = soup.select_one('#post-1995 > div > p:nth-child(1)').text
+    weather['icon'] = get_image_base64(image_path)
 
     return weather
 
@@ -109,7 +105,8 @@ def weather_component(city):
                        <div style="display: flex; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 10px; background-color: #2c2f33; color: #ffffff;">
                            <img src="data:image/png;base64,{weather['icon']}" style="width: 80px; height: 80px;" alt="Icone Chuva"/>
                            <div style="margin-left: 20px;">
-                               {texto}
+                                <p style="margin: 0; font-size: 20px; font-weight: bold;">{weather['data']}</p>
+                                <p style="margin: 0; font-size: 14px; font-weight: bold;">{weather['descricao']}</p>
                            </div>
                        </div>
                    """,
@@ -208,8 +205,8 @@ def card_component(df_mes, total):
                     border-radius: {metric_card_settings['border_radius_px']}px; 
                     box-shadow: {metric_card_settings['box_shadow']}; 
                     padding: 10px; margin-bottom: 10px;">
-            <p style="font-size: 28px; margin: 0;">Energia Total Gerada</p>
-            <p style="font-size: 24px; margin: 0;">{round(total, 2)}<span style="font-size: 16px; color: blue;"> MWh/mês</span></p>
+            <p style="font-size: 28px; margin: 0;">Energia Total Gerada 2024</p>
+            <p style="font-size: 24px; margin: 0;">{round(total, 2)}<span style="font-size: 16px; color: blue;"> MWh</span></p>
         </div>
         ''', unsafe_allow_html=True)
 

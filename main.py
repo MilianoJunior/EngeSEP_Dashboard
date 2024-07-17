@@ -36,7 +36,7 @@ def page_principal():
     ''' Página principal do dashboard que cotém as comparações entre as usinas'''
 
     # inserir o título
-    # titulo('CGH Aparecida', 'Página principal')
+    titulo('CGH Aparecida', 'Página principal')
     # st.write('CGH APARECIDA')
     # ajustar o horário para pt-br
 
