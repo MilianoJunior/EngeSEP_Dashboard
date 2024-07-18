@@ -37,17 +37,7 @@ def page_principal():
 
     # inserir o título
     titulo('CGH Aparecida', 'Página principal')
-    # st.write('CGH APARECIDA')
-    # ajustar o horário para pt-br
 
-    # Chamada para obter o tamanho da tela
-    # screen_size = get_screen_size()
-    #
-    # if screen_size:
-    #     print(screen_size)
-    #     # print(f"Tamanho da tela: {screen_size['width']} x {screen_size['height']}")
-    # else:
-    #     print("Não foi possível obter o tamanho da tela.", screen_size)
     print(' ')
     print('                  ## Ranking ##')
 
