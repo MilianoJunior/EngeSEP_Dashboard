@@ -111,7 +111,8 @@ def weather_component(city):
                        <div style="display: flex; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 10px; background-color: #2c2f33; color: #ffffff;">
                            <img src="data:image/png;base64,{weather['icon']}" style="width: 80px; height: 80px;" alt="Icone Chuva"/>
                            <div style="margin-left: 20px;">
-                                <p style="margin: 0; font-size: 20px; font-weight: bold;">{weather['data']}</p>
+                                <p style="margin: 0; font-size: 20px; font-weight: bold;"> Chapecó </p>
+                                <p style="margin: 0; font-size: 16px; font-weight: bold;">{weather['data']}</p>
                                 <p style="margin: 0; font-size: 14px; font-weight: bold;">{weather['descricao']}</p>
                            </div>
                        </div>
