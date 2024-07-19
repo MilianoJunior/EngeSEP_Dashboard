@@ -40,7 +40,7 @@ def timeit(method):
 
         return result
     return timed
-
+@timeit
 def get_weather_from_google(city):
     # criar variavel com a data de hoje
     today = pd.to_datetime('today').strftime('%Y/%m/%d')
@@ -94,6 +94,7 @@ def get_weather_from_google(city):
 
 
 # Função para exibir o componente de previsão do tempo no Streamlit
+@timeit
 def weather_component(city):
     weather = get_weather_from_google(city)
 
@@ -271,9 +272,8 @@ def chatbot_component(df):
         if not df.empty:
             colunas = list(df.columns)
             for i, row in df.iterrows():
-                prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]],2)} {colunas[1]}: {round(row[colunas[1]],2)}  {colunas[2]}: {round(row[colunas[2]],2)} /n'''
+                prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]], 2)} {colunas[1]}: {round(row[colunas[1]], 2)}  {colunas[2]}: {round(row[colunas[2]], 2)} /n'''
 
-        # resp = gemini(prompt_init)
         resp = 'Olá, tudo bem? Como posso te ajudar?'
 
         message = resp
@@ -285,8 +285,9 @@ def chatbot_component(df):
                             <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
                                 <b>Usuário</b>: {message}
                             </div>
+                            <span class="led"></span>
                         </div>
-                    """, unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
 
     if prompt := st.text_input("Digite uma mensagem..."):
         st.session_state.chatbot_messages.append(prompt)
@@ -297,8 +298,76 @@ def chatbot_component(df):
                     <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
                         <b>Usuário</b>: {message}
                     </div>
+                    <span class="led"></span>
                 </div>
             """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <style>
+        .led {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #4169E1;
+            animation: blink 3s infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+# @timeit
+# def chatbot_component(df):
+#     ''' Componente 09 - Chatbot personalizado '''
+#     st.write("IA - Hawking")
+#     messages = st.empty()
+#
+#     dir_path = os.path.dirname(os.path.realpath(__file__))
+#     image_path = os.path.join(dir_path, "img.webp")
+#     image_base64 = get_image_base64(image_path)
+#
+#     if "chatbot_messages" not in st.session_state:
+#         st.session_state.chatbot_messages = []
+#
+#     if len(st.session_state.chatbot_messages) == 0:
+#
+#         prompt_init = '''De acordo com as informações abaixo, Quanto de energia foi gerada hoje e no total? /n'''
+#
+#         if not df.empty:
+#             colunas = list(df.columns)
+#             for i, row in df.iterrows():
+#                 prompt_init += f'''{i} {colunas[0]}: {round(row[colunas[0]],2)} {colunas[1]}: {round(row[colunas[1]],2)}  {colunas[2]}: {round(row[colunas[2]],2)} /n'''
+#
+#
+#         resp = 'Olá, tudo bem? Como posso te ajudar?'
+#
+#         message = resp
+#
+#         st.session_state.chatbot_messages.append(message)
+#         messages.markdown(f"""
+#                         <div style="display: flex; align-items: center; margin-bottom: 20px;">
+#                             <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
+#                             <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
+#                                 <b>Usuário</b>: {message}
+#                             </div>
+#                         </div>
+#                     """, unsafe_allow_html=True)
+#
+#     if prompt := st.text_input("Digite uma mensagem..."):
+#         st.session_state.chatbot_messages.append(prompt)
+#         for i, message in enumerate(st.session_state.chatbot_messages):
+#             messages.markdown(f"""
+#                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
+#                     <img src="data:image/webp;base64,{image_base64}" width="50" style="border-radius: 50%; margin-right: 10px;">
+#                     <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px;">
+#                         <b>Usuário</b>: {message}
+#                     </div>
+#                 </div>
+#             """, unsafe_allow_html=True)
 
 @timeit
 def energia_bar_component(dados, period_name, start_date, end_date):
