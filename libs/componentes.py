@@ -55,11 +55,15 @@ def get_weather_from_google(city):
 
     weather = {}
     weather['data'] = today
+    weather['descricao'] = None
     for item in range(1, 30):
         try:
             texto = soup.select_one(f'#post-1995 > div > p:nth-child({item})').text
             if dia_literal in texto:
                 weather['data'] = texto
+            if 'Tempo' in texto:
+                weather['descricao'] = texto
+                break
             print(texto)
         except Exception as e:
             print(e)
@@ -80,9 +84,7 @@ def get_weather_from_google(city):
         "Lua": "icons/moon.png",
         # Adicione outros ícones conforme necessário
     }
-    try:
-        weather['descricao'] = soup.select_one('#post-1995 > div > p:nth-child(1)').text
-    except Exception as e:
+    if weather['descricao'] is None:
         weather['descricao'] = 'Não foi possível obter a previsão do tempo.'
 
     image_path = os.path.join(os.getcwd(), 'data','icons','cloudyDay.png')

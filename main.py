@@ -41,20 +41,8 @@ def page_principal():
     print(' ')
     print('                  ## Ranking ##')
 
-    # data_hora = datetime.now(tz=pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
-    # st.markdown(''':blue[CGH APARECIDA] - Última atualização: {}'''.format(data_hora))
-
-
-    # ranking
     ranking_component()
 
-    # analise_dados()
-
-    # executor()
-    # inserir o título
-    # titulo('Configurações', 'Página de configurações')
-
-    # final()
 
 
 def page_usinas():
