@@ -67,7 +67,6 @@ def pages():
         # criação do menu
         menu = on_hover_tabs(tabName=['CGH Aparecida','Unidades','Configurações'],
                              iconName=['dashboard','power','settings'], default_choice=0)
-
     # Página principal
     if menu == 'CGH Aparecida':
 
