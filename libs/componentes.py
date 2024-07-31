@@ -65,6 +65,8 @@ def get_weather_from_google(city):
             if dia_literal in texto:
                 weather['data'] = texto
             if 'Tempo' in texto:
+                if len(texto) > 40:
+                    texto = texto[:40]
                 weather['descricao'] = texto
                 break
             # print(texto)
@@ -86,7 +88,6 @@ def get_weather_from_google(city):
         "Onda": "icons/wave.png",
         "Vento": "icons/wind.png",
         "Lua": "icons/moon.png",
-        # Adicione outros ícones conforme necessário
     }
     if weather['descricao'] is None:
         weather['descricao'] = 'Não foi possível obter a previsão do tempo.'
