@@ -22,7 +22,6 @@ import time
 import asyncio
 from queue import Queue
 import requests
-import locale
 from bs4 import BeautifulSoup
 
 # cont = 0
@@ -95,7 +94,6 @@ def get_weather_from_google(city):
     for key, value in icon_dict.items():
         if key.lower() in weather['descricao'].lower():
             image_path = os.path.join(os.getcwd(), 'data', value)
-            print(key)
         else:
             image_path = os.path.join(os.getcwd(), 'data', 'icons', 'cloudyDay.png')
 
@@ -203,13 +201,14 @@ def niveis_component(dados, start_date, end_date):
 
     st.plotly_chart(fig, use_container_width=True)
 
-# Definir o locale para o Brasil
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 def calculo(EngMes):
     valor = (EngMes * 622 * 0.3838) + (EngMes * 467 * 0.6162)
-    valor_formatado = locale.currency(valor, grouping=True)
+    valor_formatado = f'R$ {valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     return valor_formatado
+
+
+
 
 @timeit
 def card_component(df_mes, total):
