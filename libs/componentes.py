@@ -259,7 +259,7 @@ def card_component(df_mes, total):
                 <p style="font-size: 26px; margin: 0;">{mes_texto.upper()}</p>
                 <p style="font-size: 20px; margin: 0;">{round(producao, 2)}
                 <span style="font-size: 12px; color: blue;"> MWh/mês</span></p>
-                <p style="font-size: 18px; margin: 0;">{valor} <span style="font-size: 12px; color: blue;"> estim.</span></p>
+                <p style="font-size: 18px; margin: 0;">{valor} <span style="font-size: 12px; color: blue;"> Receita bruta estimada</span></p>
                 <p style="font-size: 14px; margin: 0; color: {delta_color};">{delta_sign}{delta}%</p>
             </div>
             ''', unsafe_allow_html=True)

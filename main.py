@@ -97,7 +97,7 @@ def main():
             }
             .st-emotion-cache-1jicfl2{
                 width: 100%;
-                padding: 0rem 0.1rem 0.1rem;
+                padding: 0.1rem 0.1rem 0.1rem;
                 min-width: auto;
                 max-width: initial;
             }
