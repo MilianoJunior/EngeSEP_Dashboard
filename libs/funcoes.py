@@ -360,4 +360,25 @@ def get_ranking(period='2min',start_date=None, end_date=None):
         raise Exception(f'Erro ao buscar o ranking: {e}')
 
 
+cont = 0
+# decorador para tempo de execução
+def timeit(method):
+    ''' Decorador para medir o tempo de execução de uma função '''
+    def timed( *args, **kw):
+        global cont
+        cont += 1
+        name = method.__name__
+        espaco = '-' * (50 - len(name))
+        print(cont, name, espaco)
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        saida = f'{name}: {round(te - ts,5)} s'
+        espaco = '-' * (50 - len(saida))
+        print(' '*len(str(cont)), saida, espaco)
+
+        return result
+    return timed
+
+
 
